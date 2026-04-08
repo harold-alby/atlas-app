@@ -3724,3 +3724,197 @@ function apiKeyPrompt(callbackFn){
   </div>`;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS SYSTEM
+// ═══════════════════════════════════════════════════════════════
+function getProfile(){return JSON.parse(localStorage.getItem('atlas_profile')||'{}');}
+function saveProfile(p){localStorage.setItem('atlas_profile',JSON.stringify(p));updateAvatar();}
+
+function updateAvatar(){
+  const p=getProfile();
+  const el=document.getElementById('profile-avatar');
+  if(!el)return;
+  const name=p.name||'Me';
+  el.textContent=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'ME';
+}
+
+function openSettings(){
+  const p=getProfile();
+  const ns=JSON.parse(localStorage.getItem('atlas_nutrition')||'{}');
+  const macros=ns.macros;
+  const np=ns.profile||{};
+  const eq=p.equipment||[];
+  const inj=p.injuries||[];
+  const skills=p.focusSkills||[];
+  const goal=p.goal||np.goal||'';
+
+  const EQUIP=['Pull-up bar','Rings','Parallettes','Resistance bands','Kettlebells','Dumbbells','Barbell','Box','Jump rope','Foam roller'];
+  const INJR=['Right knee','Left knee','Right elbow','Left elbow','Right shoulder','Left shoulder','Lower back','Wrist'];
+  const SKILLS=['Ring Muscle-Up','Handstand','Handstand Walk','Butterfly Pull-Up','Planche','Front Lever','Back Lever'];
+  const GOALS=[['loss','Fat Loss','Reduce body fat'],['recomp','Recomposition','Lose fat, gain muscle'],['perf','Performance','Fuel athletic output'],['gain','Muscle Gain','Build size and strength']];
+  const LANGS=[['en','English'],['fr','Français'],['es','Español'],['de','Deutsch']];
+
+  const overlay=document.createElement('div');
+  overlay.id='settings-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
+
+  const initials=(p.name||'Me').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'ME';
+  const goalLabel={loss:'Fat Loss',recomp:'Recomposition',perf:'Performance',gain:'Muscle Gain'}[goal]||'Set your goal';
+
+  overlay.innerHTML=`<div style="background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;margin:0 auto;max-height:92vh;overflow-y:auto;">
+    <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:16px auto 0;"></div>
+    <div style="padding:20px 20px 0;display:flex;align-items:center;gap:16px;margin-bottom:4px;">
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#0a0a08;flex-shrink:0;">${initials}</div>
+      <div style="flex:1;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--ink);text-transform:uppercase;line-height:1;">${p.name||'Your Profile'}</div>
+        <div style="font-size:13px;color:var(--mid);margin-top:3px;">${goalLabel}</div>
+      </div>
+      <button onclick="document.getElementById('settings-overlay').remove()" style="width:34px;height:34px;border-radius:10px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+
+    <div style="padding:16px 20px 0;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Personal</div>
+      <input id="s-name" placeholder="Your name" value="${p.name||''}" style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:15px;font-family:'Outfit',sans-serif;outline:none;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+        ${[['s-age','Age',np.age||p.age||''],['s-weight','Weight kg',np.weight||p.weight||''],['s-height','Height cm',np.height||p.height||'']].map(([id,lbl,val])=>`<div><div style="font-size:11px;color:var(--mid);margin-bottom:4px;">${lbl}</div><input id="${id}" type="number" value="${val}" style="width:100%;padding:11px;background:var(--card);border:1.5px solid var(--border2);border-radius:10px;color:var(--ink);font-size:15px;font-family:'Outfit',sans-serif;outline:none;"></div>`).join('')}
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Training Goal</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px;">
+        ${GOALS.map(([val,label,sub])=>`<button onclick="selectGoal('${val}')" id="goal-btn-${val}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:${goal===val?'var(--accent-light)':'var(--card)'};border:1.5px solid ${goal===val?'var(--accent)':'var(--border)'};border-radius:12px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left;width:100%;transition:all 0.15s;"><div style="width:26px;height:26px;border-radius:8px;background:${goal===val?'var(--accent)':'var(--card2)'};border:1px solid ${goal===val?'var(--accent)':'var(--border2)'};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:${goal===val?'#0a0a08':'var(--subtle)'};flex-shrink:0;">${goal===val?'✓':{loss:'1',recomp:'2',perf:'3',gain:'4'}[val]}</div><div><div style="font-size:14px;font-weight:600;color:var(--ink);">${label}</div><div style="font-size:12px;color:var(--mid);">${sub}</div></div></button>`).join('')}
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Focus Skills</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        ${SKILLS.map(s=>`<button onclick="toggleChip(this,'focusSkills','${s}')" class="equip-chip ${skills.includes(s)?'on':''}">${s}</button>`).join('')}
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Equipment</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        ${EQUIP.map(e=>`<button onclick="toggleChip(this,'equipment','${e}')" class="equip-chip ${eq.includes(e)?'on':''}">${e}</button>`).join('')}
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Active Injuries</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        ${INJR.map(i=>`<button onclick="toggleChip(this,'injuries','${i}')" class="injury-chip ${inj.includes(i)?'on':''}">${i}</button>`).join('')}
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Nutrition</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:16px;">
+        ${macros?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">${[{dt:'Training',color:'var(--accent)',d:macros.training},{dt:'Rest',color:'var(--blue)',d:macros.rest}].map(x=>`<div><div style="font-size:10px;color:var(--subtle);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">${x.dt}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:${x.color};">${x.d.kcal}<span style="font-size:11px;color:var(--subtle);"> kcal</span></div><div style="font-size:12px;color:var(--mid);">P ${x.d.protein}g · C ${x.d.carbs}g · F ${x.d.fat}g</div></div>`).join('')}</div>`:'<div style="font-size:13px;color:var(--subtle);">Not set up yet.</div>'}
+        <button onclick="document.getElementById('settings-overlay').remove();showTab('nutrition');openNutritionSettings();" style="width:100%;padding:11px;background:var(--card2);border:1.5px solid var(--border2);border-radius:10px;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;">Edit nutrition profile →</button>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Language</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+        ${LANGS.map(([code,label])=>`<button onclick="setLang('${code}');updateLangBtns()" id="lang-btn-${code}" style="padding:10px 18px;border-radius:99px;border:1.5px solid ${currentLang===code?'var(--accent)':'var(--border2)'};background:${currentLang===code?'var(--accent-light)':'var(--card2)'};color:${currentLang===code?'var(--accent)':'var(--mid)'};font-size:14px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;">${label}</button>`).join('')}
+      </div>
+
+      <button onclick="saveSettingsAndClose()" style="width:100%;padding:17px;background:linear-gradient(135deg,var(--accent),var(--accent)cc);color:#0a0a08;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:20px;">Save</button>
+    </div>
+  </div>`;
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+let _pendingGoal=null;
+function selectGoal(val){
+  _pendingGoal=val;
+  document.querySelectorAll('[id^=goal-btn-]').forEach(b=>{
+    const isThis=b.id==='goal-btn-'+val;
+    b.style.background=isThis?'var(--accent-light)':'var(--card)';
+    b.style.borderColor=isThis?'var(--accent)':'var(--border)';
+    const num=b.querySelector('div:first-child');
+    if(num){num.style.background=isThis?'var(--accent)':'var(--card2)';num.style.color=isThis?'#0a0a08':'var(--subtle)';num.textContent=isThis?'✓':{loss:'1',recomp:'2',perf:'3',gain:'4'}[val]||'';}
+  });
+}
+
+function toggleChip(btn,key,val){
+  btn.classList.toggle('on');
+  const p=getProfile();
+  if(!p[key])p[key]=[];
+  if(p[key].includes(val))p[key]=p[key].filter(v=>v!==val);
+  else p[key].push(val);
+  saveProfile(p);
+}
+
+function updateLangBtns(){
+  ['en','fr','es','de'].forEach(code=>{
+    const b=document.getElementById('lang-btn-'+code);
+    if(!b)return;
+    const on=currentLang===code;
+    b.style.borderColor=on?'var(--accent)':'var(--border2)';
+    b.style.background=on?'var(--accent-light)':'var(--card2)';
+    b.style.color=on?'var(--accent)':'var(--mid)';
+  });
+}
+
+function saveSettingsAndClose(){
+  const p=getProfile();
+  const name=document.getElementById('s-name')&&document.getElementById('s-name').value.trim();
+  const age=Number(document.getElementById('s-age')&&document.getElementById('s-age').value);
+  const weight=Number(document.getElementById('s-weight')&&document.getElementById('s-weight').value);
+  const height=Number(document.getElementById('s-height')&&document.getElementById('s-height').value);
+  if(name)p.name=name;
+  if(age)p.age=age;
+  if(weight)p.weight=weight;
+  if(height)p.height=height;
+  if(_pendingGoal)p.goal=_pendingGoal;
+  _pendingGoal=null;
+  saveProfile(p);
+  const ns=JSON.parse(localStorage.getItem('atlas_nutrition')||'{}');
+  if(ns.profile){
+    if(age)ns.profile.age=age;
+    if(weight)ns.profile.weight=weight;
+    if(height)ns.profile.height=height;
+    if(p.goal)ns.profile.goal=p.goal;
+    if(typeof calcMacros==='function')ns.macros=calcMacros(ns.profile);
+    localStorage.setItem('atlas_nutrition',JSON.stringify(ns));
+  }
+  document.getElementById('settings-overlay')&&document.getElementById('settings-overlay').remove();
+}
+
+// ── Inject functions ─────────────────────────────────────────────
+function injectScreenHeaders() {
+  ['today','train','skills','rehab','log','nutrition'].forEach(id => {
+    const el = document.getElementById('screen-header-' + id);
+    if (el) el.innerHTML = renderScreenHeader(id);
+  });
+}
+
+function injectSVGIcons() {
+  document.querySelectorAll('.back-svg-btn').forEach(btn => {
+    btn.innerHTML = ICONS.back;
+  });
+  const settingsBtn = document.getElementById('nutrition-settings-btn');
+  if (settingsBtn) settingsBtn.innerHTML = ICONS.settings;
+  const trophy = document.getElementById('complete-trophy-icon');
+  if (trophy) trophy.innerHTML = ICONS.trophy;
+}
+
+function injectTabIcons() {
+  const map = {
+    'tab-icon-today':     ICONS.today,
+    'tab-icon-train':     ICONS.train,
+    'tab-icon-skills':    ICONS.skills,
+    'tab-icon-rehab':     ICONS.rehab,
+    'tab-icon-log':       ICONS.log,
+    'tab-icon-nutrition': ICONS.nutrition,
+  };
+  Object.entries(map).forEach(([id, svg]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = svg;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  applyLang();
+  injectTabIcons();
+  injectSVGIcons();
+  injectScreenHeaders();
+  updateAvatar();
+});
+</script>
+</body>
+</html>
