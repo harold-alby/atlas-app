@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ATLAS">
@@ -20,18 +20,18 @@
   --blue:#1d4ed8; --purple:#7c3aed; --green:#15803d; --red:#be123c;
   --teal:#0e7490; --amber:#d97706;
   --knee:#4ECDC4; --elbow:#F7B731; --shoulder:#A78BFA; --mobility:#FB923C;
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bottom:env(safe-area-inset-bottom,0px);
-  --tab-h:calc(60px + var(--safe-bottom));
+  --safe-top:env(safe-area-inset-top,44px);
+  --safe-bottom:env(safe-area-inset-bottom,20px);
+  --tab-h:calc(64px + var(--safe-bottom));
 }
-html,body{height:100%;overflow:hidden;background:var(--surface);}
+html,body{height:100%;overflow:hidden;background:var(--surface);}html{background:#f8fafc;}
 body{font-family:'DM Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
 
 /* ── LAYOUT ──────────────────────────────────────────────────── */
 #app{height:100vh;height:-webkit-fill-available;display:flex;flex-direction:column;overflow:hidden;}
 .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:var(--tab-h);display:none;}
 .screen.active{display:block;}
-.screen-inner{padding:calc(var(--safe-top) + 14px) 16px 16px;max-width:520px;margin:0 auto;}
+.screen-inner{padding:calc(var(--safe-top) + 20px) 16px 16px;max-width:520px;margin:0 auto;}
 
 /* ── TAB BAR ─────────────────────────────────────────────────── */
 .tab-bar{display:flex;align-items:stretch;background:#fff;border-top:1px solid var(--border);padding-bottom:var(--safe-bottom);flex-shrink:0;z-index:100;box-shadow:0 -1px 20px rgba(0,0,0,0.06);}
@@ -115,7 +115,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 .start-block-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;}
 
 /* ── WORKOUT PLAYER ──────────────────────────────────────────── */
-.player-header{background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 12px) 16px 12px;position:sticky;top:0;z-index:10;}
+.player-header{background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 16px) 16px 12px;position:sticky;top:0;z-index:10;}
 .player-progress{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:10px;}
 .player-progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s;}
 .exercise-display{padding:20px 16px;}
@@ -992,7 +992,7 @@ function renderRehabModuleView(key) {
   view.innerHTML = `
     <div style="font-family:'DM Sans',sans-serif;max-width:520px;margin:0 auto;padding-bottom:60px;">
       <!-- Sticky header -->
-      <div style="background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 12px) 16px 12px;position:sticky;top:0;z-index:10;">
+      <div style="background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 16px) 16px 12px;position:sticky;top:0;z-index:10;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
           <button class="back-btn" onclick="hideRehabModule()">←</button>
           <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,${m.color},${m.color}88);display:flex;align-items:center;justify-content:center;font-size:18px;">${m.icon}</div>
@@ -1064,7 +1064,7 @@ function renderMobilityModule(view) {
   const exHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#FB923C', 0)).join('');
   view.innerHTML = `
     <div style="font-family:'DM Sans',sans-serif;max-width:520px;margin:0 auto;padding-bottom:60px;">
-      <div style="background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 12px) 16px 12px;position:sticky;top:0;z-index:10;">
+      <div style="background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 16px) 16px 12px;position:sticky;top:0;z-index:10;">
         <div style="display:flex;align-items:center;gap:10px;">
           <button class="back-btn" onclick="hideRehabModule()">←</button>
           <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#FB923C,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:18px;">🌅</div>
