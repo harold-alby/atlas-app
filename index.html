@@ -484,7 +484,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
       display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:4px;
       font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:#0a0a08;
       letter-spacing:0.04em;box-shadow:0 2px 12px var(--accent-glow);">
-      HA
     </button>
   </div>
 
@@ -3961,11 +3960,37 @@ function getProfile(){return JSON.parse(localStorage.getItem('atlas_profile')||'
 function saveProfile(p){localStorage.setItem('atlas_profile',JSON.stringify(p));updateAvatar();}
 
 function updateAvatar(){
-  const p=getProfile();
-  const el=document.getElementById('profile-avatar');
-  if(!el)return;
-  const name=p.name||'Me';
-  el.textContent=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'ME';
+  const p = getProfile();
+  const el = document.getElementById('profile-avatar');
+  if (!el) return;
+
+  // Build initials from name, fallback to '?' if not set
+  const name = (p.name || '').trim();
+  let initials;
+  if (!name) {
+    initials = '?';
+    // Make it subtle to signal profile not yet set up
+    el.style.background = 'var(--card2)';
+    el.style.border = '1.5px solid var(--border2)';
+    el.style.color = 'var(--subtle)';
+    el.style.fontSize = '20px';
+  } else {
+    const words = name.split(/\s+/).filter(w => w.length > 0);
+    if (words.length >= 2) {
+      initials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    } else {
+      initials = words[0].slice(0, 2).toUpperCase();
+    }
+    el.style.background = 'var(--accent)';
+    el.style.border = 'none';
+    el.style.color = '#0a0a08';
+    el.style.fontSize = '17px';
+  }
+  el.textContent = initials;
+
+  // Also update the large avatar inside settings sheet if open
+  const settingsAvatar = document.querySelector('#settings-overlay .settings-avatar');
+  if (settingsAvatar) settingsAvatar.textContent = initials;
 }
 
 function openSettings(){
@@ -4080,28 +4105,53 @@ function updateLangBtns(){
 }
 
 function saveSettingsAndClose(){
-  const p=getProfile();
-  const name=document.getElementById('s-name')&&document.getElementById('s-name').value.trim();
-  const age=Number(document.getElementById('s-age')&&document.getElementById('s-age').value);
-  const weight=Number(document.getElementById('s-weight')&&document.getElementById('s-weight').value);
-  const height=Number(document.getElementById('s-height')&&document.getElementById('s-height').value);
-  if(name)p.name=name;
-  if(age)p.age=age;
-  if(weight)p.weight=weight;
-  if(height)p.height=height;
-  if(_pendingGoal)p.goal=_pendingGoal;
-  _pendingGoal=null;
+  const p = getProfile();
+
+  // Read all inputs before removing the overlay
+  const nameEl   = document.getElementById('s-name');
+  const ageEl    = document.getElementById('s-age');
+  const weightEl = document.getElementById('s-weight');
+  const heightEl = document.getElementById('s-height');
+
+  const name   = nameEl   ? nameEl.value.trim()       : '';
+  const age    = ageEl    ? Number(ageEl.value)        : 0;
+  const weight = weightEl ? Number(weightEl.value)     : 0;
+  const height = heightEl ? Number(heightEl.value)     : 0;
+
+  // Save whatever was filled in
+  if (name)   p.name   = name;
+  if (age)    p.age    = age;
+  if (weight) p.weight = weight;
+  if (height) p.height = height;
+  if (_pendingGoal) { p.goal = _pendingGoal; _pendingGoal = null; }
+
   saveProfile(p);
-  const ns=JSON.parse(localStorage.getItem('atlas_nutrition')||'{}');
-  if(ns.profile){
-    if(age)ns.profile.age=age;
-    if(weight)ns.profile.weight=weight;
-    if(height)ns.profile.height=height;
-    if(p.goal)ns.profile.goal=p.goal;
-    if(typeof calcMacros==='function')ns.macros=calcMacros(ns.profile);
-    localStorage.setItem('atlas_nutrition',JSON.stringify(ns));
-  }
-  document.getElementById('settings-overlay')&&document.getElementById('settings-overlay').remove();
+
+  // Sync to nutrition profile and recalculate macros
+  try {
+    const ns = JSON.parse(localStorage.getItem('atlas_nutrition') || '{}');
+    if (!ns.profile) ns.profile = {};
+    if (age)    ns.profile.age    = age;
+    if (weight) ns.profile.weight = weight;
+    if (height) ns.profile.height = height;
+    if (p.goal) ns.profile.goal   = p.goal;
+    if (typeof calcMacros === 'function') ns.macros = calcMacros(ns.profile);
+    localStorage.setItem('atlas_nutrition', JSON.stringify(ns));
+  } catch(e) { console.warn('Nutrition sync failed', e); }
+
+  // Close overlay
+  const overlay = document.getElementById('settings-overlay');
+  if (overlay) overlay.remove();
+
+  // Refresh today screen header with updated name
+  updateAvatar();
+
+  // Show brief confirmation
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:calc(var(--tab-h) + 16px);left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:99px;padding:10px 20px;font-size:14px;font-weight:600;color:var(--ink);z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.4);white-space:nowrap;';
+  toast.textContent = 'Profile saved';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
 }
 
 // ── Inject functions ─────────────────────────────────────────────
