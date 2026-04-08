@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ATLAS">
+<meta name="theme-color" content="#f8fafc">
+<title>ATLAS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Lora:ital@1&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ───────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --ink:#0f172a; --ink2:#1e293b; --mid:#475569; --subtle:#94a3b8;
+  --border:#e2e8f0; --surface:#f8fafc; --card:#ffffff;
+  --accent:#ea580c; --accent-light:#fff7ed;
+  --blue:#1d4ed8; --purple:#7c3aed; --green:#15803d; --red:#be123c;
+  --teal:#0e7490; --amber:#d97706;
+  --knee:#4ECDC4; --elbow:#F7B731; --shoulder:#A78BFA; --mobility:#FB923C;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --tab-h:calc(60px + var(--safe-bottom));
+}
+html,body{height:100%;overflow:hidden;background:var(--surface);}
+body{font-family:'DM Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* ── LAYOUT ──────────────────────────────────────────────────── */
+#app{height:100vh;height:-webkit-fill-available;display:flex;flex-direction:column;overflow:hidden;}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:var(--tab-h);display:none;}
+.screen.active{display:block;}
+.screen-inner{padding:calc(var(--safe-top) + 14px) 16px 16px;max-width:520px;margin:0 auto;}
+
+/* ── TAB BAR ─────────────────────────────────────────────────── */
+.tab-bar{display:flex;align-items:stretch;background:#fff;border-top:1px solid var(--border);padding-bottom:var(--safe-bottom);flex-shrink:0;z-index:100;box-shadow:0 -1px 20px rgba(0,0,0,0.06);}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;background:none;border:none;cursor:pointer;color:var(--subtle);font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;transition:color 0.15s;}
+.tab-btn.active{color:var(--accent);}
+.tab-icon{font-size:20px;line-height:1;}
+
+/* ── TYPOGRAPHY ──────────────────────────────────────────────── */
+.eyebrow{font-size:10px;font-weight:700;letter-spacing:0.25em;color:var(--subtle);margin-bottom:4px;text-transform:uppercase;}
+.hero-title{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;line-height:1;color:var(--ink);letter-spacing:-0.01em;}
+.hero-title .acc{color:var(--accent);}
+.section-label{font-size:10px;font-weight:700;letter-spacing:0.2em;color:var(--subtle);margin-bottom:10px;text-transform:uppercase;}
+.muted{color:var(--mid);font-size:13px;line-height:1.6;}
+
+/* ── CARDS ───────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+.card-sm{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px;}
+
+/* ── BUTTONS ─────────────────────────────────────────────────── */
+.btn-primary{padding:14px 24px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;transition:opacity 0.15s;}
+.btn-primary:active{opacity:0.85;}
+.btn-secondary{padding:12px 20px;background:var(--surface);color:var(--mid);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-ghost{padding:10px 16px;background:transparent;color:var(--accent);border:1.5px solid var(--accent);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.back-btn{width:34px;height:34px;border-radius:9px;background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* ── PILLS ───────────────────────────────────────────────────── */
+.pill{padding:7px 14px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface);color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+.pill.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* ── MODULE BADGE ────────────────────────────────────────────── */
+.mod-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:0.04em;text-transform:uppercase;}
+
+/* ── PAIN DIAL ───────────────────────────────────────────────── */
+.pain-dial{border-radius:12px;padding:12px 14px;margin-bottom:12px;border:1.5px solid;}
+input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;outline:none;cursor:pointer;width:100%;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;cursor:pointer;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.2);}
+
+/* ── EXERCISE CARD ───────────────────────────────────────────── */
+.ex-card{background:#fff;border-radius:13px;margin-bottom:9px;border:1.5px solid var(--border);overflow:hidden;transition:box-shadow 0.2s;}
+.ex-card.open{box-shadow:0 4px 16px rgba(0,0,0,0.08);}
+.ex-card-header{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;background:none;border:none;width:100%;text-align:left;}
+.ex-icon{font-size:20px;flex-shrink:0;}
+.ex-name{font-size:14px;font-weight:600;color:var(--ink);line-height:1.3;}
+.ex-sets{font-size:11px;color:var(--subtle);margin-top:1px;}
+.ex-body{border-top:1px solid var(--border);padding:12px 13px;}
+.ex-mod-banner{padding:9px 13px;font-size:12px;line-height:1.55;border-bottom:1px solid;}
+.step-row{display:flex;gap:9px;margin-bottom:8px;}
+.step-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.step-text{font-size:13px;color:#333;line-height:1.55;padding-top:2px;}
+.feel-box{border-radius:9px;padding:9px 11px;margin-top:4px;border-left:3px solid;}
+.feel-label{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:3px;}
+.feel-text{font-size:13px;color:#555;line-height:1.6;font-family:'Lora',serif;font-style:italic;}
+
+/* ── SKILL SCALING ───────────────────────────────────────────── */
+.scale-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+.scale-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.scale-title{font-size:13px;font-weight:700;color:var(--ink);}
+.scale-level{font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-light);padding:2px 8px;border-radius:99px;}
+.scale-steps{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.scale-steps::-webkit-scrollbar{display:none;}
+.scale-step{flex-shrink:0;padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;color:var(--mid);white-space:nowrap;}
+.scale-step.current{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.scale-step.done{border-color:#bbf7d0;background:#f0fdf4;color:var(--green);}
+.scale-step.locked{opacity:0.45;}
+.canyou-card{background:linear-gradient(135deg,#fff7ed,#fff);border:1.5px solid #fed7aa;border-radius:13px;padding:16px;margin-bottom:10px;}
+.canyou-q{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.canyou-sub{font-size:12px;color:var(--mid);margin-bottom:14px;line-height:1.5;}
+.canyou-btns{display:flex;gap:10px;}
+.canyou-yes{flex:1;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.canyou-no{flex:1;padding:12px;background:var(--surface);color:var(--mid);border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* ── TODAY BLOCKS ────────────────────────────────────────────── */
+.today-block{background:#fff;border:1px solid var(--border);border-radius:16px;margin-bottom:12px;overflow:hidden;}
+.today-block-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
+.today-block-num{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;font-family:'Barlow Condensed',sans-serif;}
+.today-block-info{flex:1;}
+.today-block-title{font-size:15px;font-weight:700;color:var(--ink);}
+.today-block-sub{font-size:11px;color:var(--subtle);margin-top:1px;}
+.today-block-status{font-size:18px;}
+.today-block-body{border-top:1px solid var(--border);padding:14px 16px;}
+.start-block-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;}
+
+/* ── WORKOUT PLAYER ──────────────────────────────────────────── */
+.player-header{background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 12px) 16px 12px;position:sticky;top:0;z-index:10;}
+.player-progress{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:10px;}
+.player-progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s;}
+.exercise-display{padding:20px 16px;}
+.ex-display-icon{font-size:48px;text-align:center;margin-bottom:12px;}
+.ex-display-name{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;text-align:center;color:var(--ink);line-height:1.1;margin-bottom:4px;}
+.ex-display-sets{font-size:16px;font-weight:600;color:var(--mid);text-align:center;margin-bottom:16px;}
+.set-tracker{display:flex;gap:8px;justify-content:center;margin-bottom:20px;}
+.set-dot{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--subtle);cursor:pointer;transition:all 0.15s;}
+.set-dot.done{background:var(--accent);border-color:var(--accent);color:#fff;}
+.set-dot.current{border-color:var(--accent);color:var(--accent);}
+.complete-set-btn{padding:16px;background:var(--accent);color:#fff;border:none;border-radius:13px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;margin-bottom:10px;}
+.rest-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.96);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+.rest-label{font-size:11px;font-weight:700;letter-spacing:0.25em;color:rgba(255,255,255,0.5);}
+.rest-time{font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:900;color:#fff;line-height:1;}
+.rest-skip{padding:12px 28px;border:1.5px solid rgba(255,255,255,0.25);border-radius:99px;background:transparent;color:rgba(255,255,255,0.7);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;}
+
+/* ── SKILL TREE ──────────────────────────────────────────────── */
+.track-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;}
+.track-scroll::-webkit-scrollbar{display:none;}
+.track-pill{flex-shrink:0;padding:7px 14px;border-radius:99px;border:1.5px solid;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.skill-node{background:#fff;border:1.5px solid var(--border);border-radius:13px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px;transition:all 0.15s;}
+.skill-node.achieved{border-color:#bbf7d0;background:#f0fdf4;}
+.skill-node.in-progress{border-color:#fed7aa;background:#fff7ed;}
+.skill-node.locked{opacity:0.5;}
+.skill-dot{width:30px;height:30px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;}
+.skill-connector{width:2px;height:14px;margin-left:14px;border-radius:1px;}
+.skill-info{flex:1;}
+.skill-name{font-size:15px;font-weight:600;color:var(--ink);}
+.skill-sub{font-size:11px;color:var(--subtle);margin-top:2px;}
+.skill-prog-bar{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden;}
+.skill-prog-fill{height:100%;border-radius:2px;transition:width 0.4s;}
+
+/* ── HISTORY ─────────────────────────────────────────────────── */
+.hist-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+.hist-date{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--ink);}
+.hist-meta{font-size:12px;color:var(--mid);margin-top:3px;}
+.hist-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.hist-tag{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;}
+
+/* ── PHASE TABS ──────────────────────────────────────────────── */
+.phase-tabs{display:flex;gap:7px;margin-bottom:12px;}
+.phase-tab{flex:1;padding:9px 6px;border-radius:10px;border:2px solid transparent;background:var(--surface);cursor:pointer;text-align:center;transition:all 0.18s;}
+.phase-tab.active{border-color:var(--accent);}
+.phase-tab-dot{width:7px;height:7px;border-radius:50%;margin:0 auto 4px;}
+.phase-tab-label{font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;}
+.phase-tab-sub{font-size:9px;color:#ccc;margin-top:1px;}
+
+/* ── DAY SELECTOR ────────────────────────────────────────────── */
+.day-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.day-scroll::-webkit-scrollbar{display:none;}
+.day-btn{flex-shrink:0;min-width:48px;padding:8px 10px;border-radius:10px;border:none;cursor:pointer;text-align:center;transition:all 0.18s;}
+.day-btn-label{font-size:10px;font-weight:700;letter-spacing:0.04em;}
+.day-btn-theme{font-size:9px;margin-top:2px;}
+
+/* ── STREAK DOTS ─────────────────────────────────────────────── */
+.streak-dots{display:flex;gap:3px;flex-wrap:wrap;}
+.streak-dot{width:24px;height:24px;border-radius:6px;border:none;cursor:pointer;font-size:8px;font-weight:700;transition:all 0.12s;}
+
+/* ── COMPLETE SCREEN ─────────────────────────────────────────── */
+.complete-screen{padding:32px 20px;text-align:center;}
+.complete-emoji{font-size:56px;margin-bottom:16px;}
+.complete-title{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:900;color:var(--ink);}
+.complete-sub{font-size:15px;color:var(--mid);margin-top:6px;}
+.complete-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:20px 0;}
+.complete-stat{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;}
+.complete-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--ink);}
+.complete-stat-label{font-size:10px;color:var(--subtle);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;}
+
+/* ── MISC ────────────────────────────────────────────────────── */
+.divider{height:1px;background:var(--border);margin:12px 0;}
+.notice{display:flex;gap:9px;align-items:flex-start;background:var(--accent-light);border:1px solid #fed7aa;border-radius:10px;padding:11px;margin-bottom:12px;font-size:12px;color:#7c2d12;line-height:1.5;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══ TAB BAR ═══ -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('today')">
+    <span class="tab-icon">☀️</span>Today
+  </button>
+  <button class="tab-btn" onclick="showTab('train')">
+    <span class="tab-icon">⚡</span>Train
+  </button>
+  <button class="tab-btn" onclick="showTab('skills')">
+    <span class="tab-icon">🎯</span>Skills
+  </button>
+  <button class="tab-btn" onclick="showTab('rehab')">
+    <span class="tab-icon">🩺</span>Rehab
+  </button>
+  <button class="tab-btn" onclick="showTab('log')">
+    <span class="tab-icon">📋</span>Log
+  </button>
+</div>
+
+<!-- ═══ TODAY ═══ -->
+<div id="screen-today" class="screen active">
+<div class="screen-inner">
+  <div style="margin-bottom:20px;">
+    <div class="eyebrow" id="today-date"></div>
+    <div class="hero-title">Today's<br><span class="acc">Session</span></div>
+  </div>
+
+  <!-- Block 1: Warm-up -->
+  <div class="today-block" id="block-warmup">
+    <div class="today-block-header" onclick="toggleBlock('warmup')">
+      <div class="today-block-num" style="background:#fff4ed;color:var(--mobility);">1</div>
+      <div class="today-block-info">
+        <div class="today-block-title">Mobility Warm-up</div>
+        <div class="today-block-sub">Full body flow · 5–8 min · 8 movements</div>
+      </div>
+      <div class="today-block-status" id="status-warmup">🟠</div>
+    </div>
+    <div class="today-block-body hidden" id="body-warmup">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="font-size:11px;background:#fff4ed;color:var(--mobility);padding:2px 9px;border-radius:99px;font-weight:600;">Neck · Thoracic · Hips · Spine</span>
+        <span style="font-size:11px;background:var(--surface);color:var(--mid);padding:2px 9px;border-radius:99px;font-weight:600;">Before every session</span>
+      </div>
+      <div id="warmup-exercises"></div>
+      <button class="start-block-btn" onclick="markBlockDone('warmup')">✓ Mark Warm-up Complete</button>
+    </div>
+  </div>
+
+  <!-- Block 2: Prep / Rehab -->
+  <div class="today-block" id="block-prep">
+    <div class="today-block-header" onclick="toggleBlock('prep')">
+      <div class="today-block-num" style="background:#e8faf9;color:var(--knee);">2</div>
+      <div class="today-block-info">
+        <div class="today-block-title">Rehab Prep</div>
+        <div class="today-block-sub" id="prep-sub">Knee · Elbow · 10–12 min</div>
+      </div>
+      <div class="today-block-status" id="status-prep">⚪</div>
+    </div>
+    <div class="today-block-body hidden" id="body-prep">
+      <div class="notice">⚠️ Run today's rehab exercises before training. This is your joint prep, not optional.</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="btn-ghost" onclick="showTab('rehab');showRehabModule('knee')">🦵 Knee Rehab</button>
+        <button class="btn-ghost" onclick="showTab('rehab');showRehabModule('elbow')">💪 Elbow Rehab</button>
+        <button class="btn-ghost" onclick="showTab('rehab');showRehabModule('shoulder')">🫁 Shoulder</button>
+      </div>
+      <button class="start-block-btn" onclick="markBlockDone('prep')">✓ Mark Prep Complete</button>
+    </div>
+  </div>
+
+  <!-- Block 3: Workout -->
+  <div class="today-block" id="block-workout">
+    <div class="today-block-header" onclick="toggleBlock('workout')">
+      <div class="today-block-num" style="background:#fff7ed;color:var(--accent);">3</div>
+      <div class="today-block-info">
+        <div class="today-block-title" id="workout-block-title">Today's Workout</div>
+        <div class="today-block-sub" id="workout-block-sub">Select from Train tab</div>
+      </div>
+      <div class="today-block-status" id="status-workout">⚪</div>
+    </div>
+    <div class="today-block-body hidden" id="body-workout">
+      <div id="today-workout-preview"></div>
+      <button class="start-block-btn" onclick="showTab('train')" style="margin-bottom:8px;">⚡ Go to Workout</button>
+    </div>
+  </div>
+
+  <!-- Block 4: Cool-down -->
+  <div class="today-block" id="block-cooldown">
+    <div class="today-block-header" onclick="toggleBlock('cooldown')">
+      <div class="today-block-num" style="background:#f3f0ff;color:var(--shoulder);">4</div>
+      <div class="today-block-info">
+        <div class="today-block-title">Cool-down</div>
+        <div class="today-block-sub">Targeted stretches · 5–8 min</div>
+      </div>
+      <div class="today-block-status" id="status-cooldown">⚪</div>
+    </div>
+    <div class="today-block-body hidden" id="body-cooldown">
+      <div id="cooldown-exercises"></div>
+      <button class="start-block-btn" onclick="markBlockDone('cooldown')">✓ Mark Cool-down Complete</button>
+    </div>
+  </div>
+
+  <!-- Session complete -->
+  <div id="session-complete-banner" class="hidden" style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #86efac;border-radius:14px;padding:16px;text-align:center;margin-top:4px;">
+    <div style="font-size:32px;margin-bottom:8px;">🏆</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--green);">Full Session Complete</div>
+    <div style="font-size:13px;color:var(--mid);margin-top:4px;">Logged to your history.</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ TRAIN ═══ -->
+<div id="screen-train" class="screen">
+<div id="train-home">
+<div class="screen-inner">
+  <div class="eyebrow">ATLAS</div>
+  <div class="hero-title">Train<br><span class="acc">Smart</span></div>
+  <div class="muted" style="margin-bottom:20px;">Select a workout type. All exercises auto-scale to your current skill level.</div>
+
+  <div class="section-label">Workout type</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+    <button class="card" style="cursor:pointer;text-align:left;border:none;" onclick="startWorkout('skills')">
+      <div style="font-size:28px;margin-bottom:6px;">🎯</div>
+      <div style="font-size:15px;font-weight:700;">Skill Session</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px;">Focus skills + progressions</div>
+    </button>
+    <button class="card" style="cursor:pointer;text-align:left;border:none;" onclick="startWorkout('strength')">
+      <div style="font-size:28px;margin-bottom:6px;">💪</div>
+      <div style="font-size:15px;font-weight:700;">Strength</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px;">Push · pull · compress</div>
+    </button>
+    <button class="card" style="cursor:pointer;text-align:left;border:none;" onclick="startWorkout('conditioning')">
+      <div style="font-size:28px;margin-bottom:6px;">🔥</div>
+      <div style="font-size:15px;font-weight:700;">Conditioning</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px;">AMRAP · intervals</div>
+    </button>
+    <button class="card" style="cursor:pointer;text-align:left;border:none;" onclick="startWorkout('handstand')">
+      <div style="font-size:28px;margin-bottom:6px;">🤸</div>
+      <div style="font-size:15px;font-weight:700;">Handstand</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px;">HS skill progression</div>
+    </button>
+  </div>
+
+  <div class="section-label">Recent workouts</div>
+  <div id="recent-workouts-list"></div>
+</div>
+</div>
+
+<!-- Workout player -->
+<div id="train-player" class="hidden">
+  <div class="player-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="back-btn" onclick="exitWorkout()">←</button>
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.2em;color:var(--subtle);" id="player-eyebrow">WORKOUT</div>
+        <div style="font-size:16px;font-weight:700;color:var(--ink);" id="player-title">Skill Session</div>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--mid);" id="player-counter">1 / 6</div>
+    </div>
+    <div class="player-progress"><div class="player-progress-fill" id="player-progress-fill" style="width:0%"></div></div>
+  </div>
+  <div id="player-content" style="padding-bottom:20px;"></div>
+</div>
+</div>
+
+<!-- ═══ SKILLS ═══ -->
+<div id="screen-skills" class="screen">
+<div class="screen-inner">
+  <div class="eyebrow">Skill Trees</div>
+  <div class="hero-title">Your<br><span class="acc">Progressions</span></div>
+
+  <div class="track-scroll" style="margin-bottom:16px;" id="skills-track-row"></div>
+  <div id="skills-tree-list"></div>
+</div>
+</div>
+
+<!-- ═══ REHAB ═══ -->
+<div id="screen-rehab" class="screen">
+
+  <!-- Rehab dashboard -->
+  <div id="rehab-dashboard">
+  <div class="screen-inner">
+    <div class="eyebrow">Recovery</div>
+    <div class="hero-title">Rehab &<br><span class="acc">Mobility</span></div>
+    <div class="muted" style="margin-bottom:20px;">Pain-adaptive daily modules. 10–15 min each.</div>
+
+    <!-- Start here -->
+    <div style="background:linear-gradient(135deg,#fff4ed,#fff);border:1.5px solid #fed7aa;border-radius:14px;padding:14px;margin-bottom:16px;cursor:pointer;" onclick="showRehabModule('mobility')">
+      <div style="font-size:10px;font-weight:700;color:var(--mobility);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Start every session here</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--mobility),#fbbf24);display:flex;align-items:center;justify-content:center;font-size:22px;">🌅</div>
+        <div style="flex:1;">
+          <div style="font-size:16px;font-weight:700;color:var(--ink);">Mobility Warm-up</div>
+          <div style="font-size:11px;color:var(--mid);margin-top:1px;">Full body flow · 5–8 min · 8 movements</div>
+        </div>
+        <span style="font-size:18px;color:var(--mobility);">→</span>
+      </div>
+    </div>
+
+    <div class="section-label">Rehab Modules</div>
+    <div id="rehab-module-cards"></div>
+
+    <!-- Suggested sequence -->
+    <div class="card" style="margin-top:8px;">
+      <div style="font-size:12px;font-weight:700;color:var(--mid);margin-bottom:8px;">💡 Suggested daily order</div>
+      <div style="font-size:13px;color:var(--mid);line-height:1.8;">
+        <span style="color:var(--mobility);font-weight:600;">① </span>Mobility warm-up (5–8 min)<br>
+        <span style="color:var(--knee);font-weight:600;">② </span>Knee rehab (10–12 min)<br>
+        <span style="color:var(--elbow);font-weight:600;">③ </span>Elbow rehab (10–12 min)<br>
+        <span style="color:var(--shoulder);font-weight:600;">④ </span>Shoulder (alternate days)<br>
+        <span style="color:var(--subtle);">Total ~30–40 min, or one module on busy days.</span>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Module views (injected dynamically) -->
+  <div id="rehab-module-view" class="hidden"></div>
+</div>
+
+<!-- ═══ LOG ═══ -->
+<div id="screen-log" class="screen">
+<div class="screen-inner">
+  <div class="eyebrow">History</div>
+  <div class="hero-title">Session<br><span class="acc">Log</span></div>
+  <div id="log-list"></div>
+</div>
+</div>
+
+</div><!-- #app -->
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════
+const STATE = {
+  activeTab: 'today',
+  rehabModule: null,
+  skillTrack: 'muscle-up',
+  workoutType: null,
+  workoutStep: 0,
+  currentExercises: [],
+  currentSetIdx: 0,
+  restTimer: null,
+  sessionStart: null,
+  blocksDone: { warmup: false, prep: false, workout: false, cooldown: false },
+  skillLevels: JSON.parse(localStorage.getItem('atlas_skills') || '{}'),
+  sessionLog: JSON.parse(localStorage.getItem('atlas_log') || '[]'),
+  rehabState: JSON.parse(localStorage.getItem('atlas_rehab') || '{"knee":{"phase":1,"dayIdx":0,"pain":3},"elbow":{"phase":1,"dayIdx":0,"pain":2},"shoulder":{"phase":1,"dayIdx":0,"pain":2}}'),
+  openExCards: {},
+};
+
+function saveState() {
+  localStorage.setItem('atlas_skills', JSON.stringify(STATE.skillLevels));
+  localStorage.setItem('atlas_log', JSON.stringify(STATE.sessionLog));
+  localStorage.setItem('atlas_rehab', JSON.stringify(STATE.rehabState));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PAIN UTILS
+// ═══════════════════════════════════════════════════════════════════════
+function getPainBand(p) { return p <= 2 ? 'low' : p <= 4 ? 'mid' : 'high'; }
+const PAIN_CFG = {
+  low:  { label:'Good day',  color:'#4ECDC4', bg:'#f0fdfb', desc:'Full program'  },
+  mid:  { label:'3–4 / 10', color:'#F7B731', bg:'#fffbf0', desc:'Modified load' },
+  high: { label:'5+ / 10',  color:'#FF6B6B', bg:'#fff5f5', desc:'Unload only'   },
+};
+const TAG_C = {
+  passive:    { bg:'#e8f4f8', text:'#2471a3' },
+  mobility:   { bg:'#e8f8f0', text:'#1e8449' },
+  stretch:    { bg:'#f5eef8', text:'#7d3c98' },
+  activation: { bg:'#fef9e7', text:'#b7950b' },
+  strength:   { bg:'#fdebd0', text:'#ca6f1e' },
+  sport:      { bg:'#fdecea', text:'#c0392b' },
+  flow:       { bg:'#fff0e8', text:'#d4691e' },
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// EXERCISE LIBRARY (rehab + mobility)
+// ═══════════════════════════════════════════════════════════════════════
+const MOBILITY_FLOW = [
+  { name:'Neck Half-Circles', dur:'60s', icon:'🌙', tag:'flow', steps:['Sit or stand tall. Drop chin to chest.','Slowly roll ear to right shoulder — hold 3s.','Return through centre. Roll to left — hold 3s.','Repeat. Do NOT roll backward.'], feel:'Gradual release through the sides of the neck. Never force the range.' },
+  { name:'Thread the Needle', dur:'60s each', icon:'🪡', tag:'flow', steps:['Start on hands and knees.','Slide one arm along the floor under your body until your shoulder touches the ground.','Hold 3s. Return. 6–8 reps each side.'], feel:'Upper back rotating open. Shoulder and neck releasing.' },
+  { name:'Cat-Cow', dur:'90s', icon:'🐱', tag:'flow', steps:['Hands and knees, spine neutral.','Inhale: drop belly, lift head + tailbone (cow).','Exhale: round spine to ceiling, tuck chin + tail (cat).','Move slowly with breath — fluid.'], feel:'Whole spine decompressing. Each vertebra moving.' },
+  { name:'Hip 90/90 Windshield Wipers', dur:'90s', icon:'🔁', tag:'flow', steps:['Sit, both knees bent in front of you, feet wide.','Let both knees fall to one side. Hold 3s.','Return and fall to the other side.','Slow continuous swinging.'], feel:'Hips opening alternately. Inner thigh and glute stretching each way.' },
+  { name:"World's Greatest Stretch", dur:'60s each', icon:'🌍', tag:'flow', steps:['Lunge forward, back knee down.','Same-side hand on floor inside front foot.','Rotate opposite arm overhead. Hold 3s.','Repeat slowly.'], feel:'Hip flexor, thoracic, hamstring and ankle warming up together.' },
+  { name:'Downward Dog → Cobra', dur:'90s', icon:'🐍', tag:'flow', steps:['Start in downward dog — hips high.','Shift forward to plank.','Lower to floor, press into cobra — hips down, chest up.','Push back to down dog. Continuous flow.'], feel:'Spine extending then flexing. Full anterior chain opening.' },
+  { name:'Deep Squat Hold', dur:'60s', icon:'🏺', tag:'flow', steps:['Feet shoulder-width, toes slightly out.','Lower into deepest comfortable squat.','Hands clasped, elbows pressing knees wide.','Breathe into hips. Full 60s.'], feel:'Hips, groin and ankle dorsiflexion opening. Heels up? Place rolled mat under them.' },
+  { name:'Wrist CARs + Shoulder Rolls', dur:'60s', icon:'🌀', tag:'flow', steps:['Extend both arms forward.','Slowly rotate wrists full circles — 5 each direction.','Roll shoulders backward 5 reps, then forward 5.','Finish with arm swings.'], feel:'Wrist and shoulder joints waking up. Important before any ring work.' },
+];
+
+const COOL_DOWN = [
+  { name:'Pigeon Pose', dur:'90s each', icon:'🕊️', tag:'stretch', steps:['From hands-and-knees, bring shin forward across body.','Extend back leg. Lower hips.','Actively squeeze front glute into the floor.','Hold full 90s each side.'], feel:'Hip flexor and glute of front leg opening deeply.' },
+  { name:'Lat Hang', dur:'60s', icon:'🙌', tag:'stretch', steps:['Hang from a bar with both hands overhead.','Relax the shoulders completely — let them rise to ears.','Breathe into the lats.','Hold 60s. Bend knees if needed.'], feel:'Full decompression of the spine and lats. Shoulders soft.' },
+  { name:'Thoracic Extension on Foam Roller', dur:'60s', icon:'🧻', tag:'stretch', steps:['Sit in front of a foam roller or rolled mat.','Lean back so it sits at mid-back (T7–T9).','Support your head, let your upper back extend over it.','Hold 60s. Move up one vertebra and repeat.'], feel:'Mid and upper back opening. Chest expanding.' },
+  { name:'Supine Twist', dur:'60s each', icon:'🌪️', tag:'stretch', steps:['Lie on back, knees bent.','Drop both knees to one side.','Extend opposite arm out. Hold.','Switch sides.'], feel:'Lower back rotating open. Deep lumbar release.' },
+  { name:'Child\'s Pose', dur:'90s', icon:'🧸', tag:'stretch', steps:['Kneel, sit back toward heels.','Fold forward, arms extended overhead.','Breathe into the low back.','Let the spine round completely.'], feel:'Full posterior chain settling. A reset for the whole body.' },
+];
+
+const KNEE_LIB = {
+  decompression: { name:'Knee Decompression', sets:'2×30s each', icon:'🛏️', tag:'passive', steps:['Lie flat on your back.','Bend one knee, loop a band behind your thigh.','Gently pull thigh toward chest — let knee relax open.','Hold 30s, breathe slowly. Switch.'], feel:'A gentle release behind the kneecap. No pain.', mods:{low:null,mid:'Reduce pull to 50%. Focus on breathing.',high:'No band. Leg elevated on pillow, breathe 60s.'} },
+  vmoWallSit:    { name:'VMO Wall Sit (shallow)', sets:'3×20s', icon:'🧱', tag:'activation', steps:['Back flat against wall, feet hip-width.','Slide down just 20–30°.','Push knees outward — feel teardrop above inner kneecap.','Hold 20s. Slide back up slowly.'], feel:'Burn just above the inner knee (VMO). Nothing inside the joint.', mods:{low:null,mid:'15° only. 10s holds.',high:'Standing VMO squeeze with band ×10s×3.'} },
+  gluteBridge:   { name:'Single-Leg Glute Bridge', sets:'3×10 each', icon:'🌉', tag:'activation', steps:['Lie on back, knees bent, feet flat.','Extend one leg straight out.','Drive through bent heel and lift hips.','Squeeze glute 1s at top. Lower on 3 counts.'], feel:'Glute doing all the work. Zero strain at the knee.', mods:{low:null,mid:'Both feet on floor.',high:'Bilateral bridge, 3s up/3s down.'} },
+  ninetyNinety:  { name:'90/90 Hip Rotation', sets:'3×8 each', icon:'🔄', tag:'mobility', steps:['Sit, both legs bent to 90°.','Keep glutes grounded.','Rotate toward front leg, lower shin to floor.','Hold 2s. Return. Repeat.'], feel:'Deep stretch in front hip and outer glute. Nothing in the knee.', mods:{low:null,mid:'Sit on blanket. Reduce range 30%.',high:'Just sit in 90/90 and breathe 60s.'} },
+  tke:           { name:'Terminal Knee Extension', sets:'3×15 each', icon:'🎯', tag:'strength', steps:['Band anchored at knee height behind you.','Loop behind knee. 15° starting bend.','Straighten to full lockout — slow and controlled.','Hold 1s at lockout. Return. Repeat.'], feel:'VMO firing hard at the last 15° of extension.', mods:{low:null,mid:'Lighter band. 3s each way.',high:'Lying extension from 45°→full ×12.'} },
+  spanishSquat:  { name:'Spanish Squat', sets:'4×30–45s', icon:'🪑', tag:'strength', steps:['Band anchored in front at hip height.','Lean back as you squat — shins vertical.','Lower to thighs roughly parallel.','Hold. Sit into band, not over toes.'], feel:'Quad + VMO burn. Pressure in muscle, not joint.', mods:{low:null,mid:'Quarter depth. 20s holds.',high:'Wall sit 15° with VMO squeeze.'} },
+  calfRaise:     { name:'Eccentric Calf Raise', sets:'3×12 slow', icon:'⬆️', tag:'strength', steps:['Stand on step edge, heels hanging.','Rise up on both feet (1s).','Transfer to one foot.','Lower heel below step over 4s. Rise on both.'], feel:'Deep calf burn. Nothing at the knee.', mods:{low:null,mid:'Both feet throughout. Still 4s lower.',high:'Flat ground, bilateral only.'} },
+  hipCAR:        { name:'Standing Hip CAR', sets:'2×5 each leg', icon:'🔵', tag:'mobility', steps:['Stand by wall, one hand for balance.','Lift opposite knee. Draw biggest possible circle.','Up → out → behind → back. Very slow.','5 each direction. Switch.'], feel:'Hip socket through full range. Standing glute stays on.', mods:{low:null,mid:'Reduce circle by half.',high:'Seated hip CARs in chair.'} },
+  lateralBandWalk: { name:'Lateral Band Walk', sets:'3×12 each way', icon:'↔️', tag:'activation', steps:['Band above both knees.','Step right — lead foot first, keep tension.','12 right, 12 left = 1 set.','Knees pushing outward throughout.'], feel:'Outer glute burning. Hips level.', mods:{low:null,mid:'Lighter band, smaller steps.',high:'Side-lying clamshells ×15 each.'} },
+  stepUp:        { name:'Lateral Step-Up', sets:'3×8 each', icon:'📦', tag:'strength', steps:['Stand beside 15–20cm step. Foot fully on box.','Drive through heel — no push from trail leg.','Stand tall at top.','Lower slowly on 3 counts.'], feel:'Glute of working leg driving. Front knee tracks over 2nd toe.', mods:{low:null,mid:'10cm. 4s descent. Hold wall.',high:'Seated straight-leg raise, hold 3s ×12.'} },
+};
+
+const ELBOW_LIB = {
+  wristFlexorStretch: { name:'Wrist Flexor Stretch', sets:'3×45s each', icon:'🤲', tag:'stretch', steps:['Extend one arm, palm up.','With other hand, gently pull fingers back.','Keep elbow fully straight.','Hold 45s. Switch.'], feel:'Stretch along inner forearm toward elbow. 3–4/10 intensity.', mods:{low:null,mid:'Reduce pull. 30s holds.',high:'Gentle wrist circles only.'} },
+  wristExtensorStretch: { name:'Wrist Extensor Stretch', sets:'3×45s each', icon:'🖐️', tag:'stretch', steps:['Extend one arm, palm down.','With other hand, pull fingers down toward you.','Elbow stays straight.','Hold 45s. Switch.'], feel:'Stretch along outer forearm. Targets tennis elbow tissue.', mods:{low:null,mid:'Less tension. 30s holds.',high:'Passive hang — wrist drops by gravity only.'} },
+  eccentricWristCurl: { name:'Eccentric Wrist Curl', sets:'3×15 slow each', icon:'💪', tag:'strength', steps:['Forearm resting on table, palm up, light weight.','Use other hand to lift into curl.','Remove helping hand.','Lower slowly over 4s. That\'s 1 rep.'], feel:'Loading deep into inner forearm. Mild discomfort expected — sharp pain is not.', mods:{low:null,mid:'No weight — gravity only.',high:'Isometric: palm up, press gently into table 10s×5.'} },
+  eccentricWristExtension: { name:'Eccentric Wrist Extension', sets:'3×15 slow each', icon:'🔧', tag:'strength', steps:['Forearm on table, palm down, light weight.','Use other hand to lift wrist into extension.','Remove helping hand.','Lower slowly over 4s.'], feel:'Loading outer forearm. Key tennis elbow exercise.', mods:{low:null,mid:'Gravity only — no weight.',high:'Isometric: palm down, gentle press into table 10s×5.'} },
+  pronationSupination: { name:'Pronation / Supination', sets:'2×15 each direction', icon:'🔄', tag:'mobility', steps:['Elbow bent 90°, held at side.','Hold hammer or water bottle by handle.','Slowly rotate palm up (supination), hold 2s.','Slowly rotate palm down (pronation), hold 2s.'], feel:'Rotation through the forearm. Gentle loading of radial head.', mods:{low:null,mid:'No weight — just slow rotation.',high:'Same, no weight, smaller range.'} },
+  fingerTendonGlide: { name:'Finger Tendon Glide', sets:'3×8 reps', icon:'✋', tag:'mobility', steps:['Hold hand up, fingers straight.','Curl to hook fist (tips straight, knuckles bent). Hold 2s.','Move to full fist. Hold 2s.','Fully open. That\'s 1 rep.'], feel:'Gliding through finger tendons. Should feel smooth.', mods:{low:null,mid:'Safe at all levels.',high:'Safe at all levels.'} },
+  wristCircles: { name:'Wrist CARs', sets:'2×5 circles each wrist', icon:'⭕', tag:'mobility', steps:['Arm out, elbow bent or straight.','Slowest, biggest wrist circle possible.','Keep smooth — maximise end range.','5 clockwise, 5 counter. Switch.'], feel:'Full wrist joint through its range.', mods:{low:null,mid:'Safe at all levels.',high:'Reduce range if painful.'} },
+  bandPullApart: { name:'Band Pull-Apart', sets:'3×15', icon:'↔️', tag:'activation', steps:['Hold band at shoulder height, hands shoulder-width.','Keep arms straight and pull band apart.','Squeeze shoulder blades. Control return over 2s.','Elbows stay straight.'], feel:'Rear shoulder and upper back. Inner elbow feels nothing.', mods:{low:null,mid:'Lighter band. Slower return.',high:'Isometric — hold taut for 10s×5.'} },
+};
+
+const SHOULDER_LIB = {
+  pendulum: { name:'Pendulum Swing', sets:'2×60s each', icon:'🕰️', tag:'passive', steps:['Lean forward, one hand on table for support.','Let opposite arm hang completely loose.','Gently swing in small circles — gravity-driven.','Do not muscle it.'], feel:'Shoulder joint decompressing. Zero shoulder effort.', mods:{low:null,mid:'Same — safe at all levels.',high:'Same. Reduce circle size.'} },
+  shoulderCAR: { name:'Shoulder CAR', sets:'2×3 circles each', icon:'🌐', tag:'mobility', steps:['Stand tall, core slightly braced.','Lift one arm, trace the largest possible circle.','Over your head, behind, and around. 10+ seconds per circle.','Keep smooth — no hitching.'], feel:'Shoulder working through full range. Notice where it\'s stiff.', mods:{low:null,mid:'Reduce circle by 30%.',high:'Small pain-free circles only.'} },
+  wallSlide: { name:'Wall Slide', sets:'3×10 reps', icon:'🧱', tag:'activation', steps:['Stand facing wall, forearms resting on it, elbows 90°.','Keep forearms in contact throughout.','Slide arms up overhead as far as pain-free.','Slide back down slowly.'], feel:'Lower traps and serratus switching on. No pinching at top.', mods:{low:null,mid:'Only to the pain-free height.',high:'Seated against wall — less overhead demand.'} },
+  bandExternalRotation: { name:'Band External Rotation', sets:'3×15 each', icon:'🎗️', tag:'strength', steps:['Elbow 90°, held at side. Small towel under armpit.','Hold light band anchored beside you.','Rotate forearm outward, away from body.','Hold 1s. Return slowly over 3s.'], feel:'Rear shoulder and rotator cuff working. This rebuilds the cuff.', mods:{low:null,mid:'Lighter band. Smaller range.',high:'Isometric: press forearm into wall 10s×5.'} },
+  sleepersStretch: { name:'Sleeper Stretch', sets:'2×60s each', icon:'😴', tag:'stretch', steps:['Lie on side on the affected shoulder.','Bend elbow 90°, forearm pointing up.','With other hand, gently push forearm toward floor.','Hold at first resistance for 60s.'], feel:'Deep internal rotation stretch in back of shoulder. 3–4/10 intensity.', mods:{low:null,mid:'Less pressure. 45s.',high:'No push — just lie in position.'} },
+  crossBodyStretch: { name:'Cross-Body Stretch', sets:'3×45s each', icon:'🤗', tag:'stretch', steps:['Bring arm across chest.','Use other hand to hold upper arm (not elbow).','Keep shoulder down — don\'t let it shrug.','Hold 45s. Switch.'], feel:'Stretch across back of shoulder (posterior capsule).', mods:{low:null,mid:'Less pull. 30s.',high:'Passive only — arm rests across doorframe.'} },
+  facePull: { name:'Face Pull', sets:'3×15', icon:'🎯', tag:'activation', steps:['Band at face height.','Hold with both hands, palms down.','Pull toward face, elbows flaring out and back.','At end range, rotate thumbs behind you. Hold 1s. Return.'], feel:'Rear delts and external rotators. Upper traps should NOT dominate.', mods:{low:null,mid:'Lighter band. 4s return.',high:'Isometric hold at full pull 10s×5.'} },
+  ytw: { name:'Y-T-W Raises', sets:'2×10 each position', icon:'✈️', tag:'activation', steps:['Lie face down or lean forward 45°.','Y: arms overhead in Y, thumbs up. Hold 2s.','T: arms out to sides, thumbs up. Hold 2s.','W: elbows bent 90°, pull back like a W. Hold 2s.'], feel:'Mid and lower trapezius working hard. Upper traps quiet.', mods:{low:null,mid:'Only Y and T to start.',high:'Seated gentle arm raises only.'} },
+};
+
+// ─── WEEKLY SCHEDULES ─────────────────────────────────────────────────
+const KNEE_WEEKLY = {
+  1:[
+    {day:'Monday',   label:'MON', theme:'Decompress', color:'#4ECDC4', activation:'vmoWallSit',   focus:['ninetyNinety','calfRaise']},
+    {day:'Tuesday',  label:'TUE', theme:'Activate',   color:'#48CAE4', activation:'gluteBridge',  focus:['tke','hipCAR']},
+    {day:'Wednesday',label:'WED', theme:'Mobility',   color:'#4ECDC4', activation:'vmoWallSit',   focus:['ninetyNinety','calfRaise']},
+    {day:'Thursday', label:'THU', theme:'Strength',   color:'#48CAE4', activation:'gluteBridge',  focus:['lateralBandWalk','stepUp']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow',  color:'#4ECDC4', activation:'vmoWallSit',   focus:['tke','spanishSquat']},
+  ],
+  2:[
+    {day:'Monday',   label:'MON', theme:'Stability',  color:'#F7B731', activation:'vmoWallSit',   focus:['tke','lateralBandWalk']},
+    {day:'Tuesday',  label:'TUE', theme:'Load',       color:'#F9A825', activation:'gluteBridge',  focus:['spanishSquat','ninetyNinety']},
+    {day:'Wednesday',label:'WED', theme:'Strength',   color:'#F7B731', activation:'vmoWallSit',   focus:['stepUp','tke']},
+    {day:'Thursday', label:'THU', theme:'Mobility',   color:'#F9A825', activation:'gluteBridge',  focus:['hipCAR','ninetyNinety']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow',  color:'#F7B731', activation:'vmoWallSit',   focus:['lateralBandWalk','spanishSquat']},
+  ],
+  3:[
+    {day:'Monday',   label:'MON', theme:'Sport Prep', color:'#FF6B6B', activation:'gluteBridge',  focus:['tke','lateralBandWalk']},
+    {day:'Tuesday',  label:'TUE', theme:'Strength',   color:'#E55A5A', activation:'vmoWallSit',   focus:['spanishSquat','stepUp']},
+    {day:'Wednesday',label:'WED', theme:'Control',    color:'#FF6B6B', activation:'gluteBridge',  focus:['calfRaise','hipCAR']},
+    {day:'Thursday', label:'THU', theme:'Power',      color:'#E55A5A', activation:'vmoWallSit',   focus:['tke','lateralBandWalk']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow',  color:'#FF6B6B', activation:'gluteBridge',  focus:['spanishSquat','calfRaise']},
+  ],
+};
+
+const ELBOW_WEEKLY = {
+  1:[
+    {day:'Monday',   label:'MON', theme:'Stretch',   color:'#F7B731', activation:'wristFlexorStretch',    focus:['wristExtensorStretch','wristCircles']},
+    {day:'Tuesday',  label:'TUE', theme:'Mobility',  color:'#F9A825', activation:'fingerTendonGlide',      focus:['pronationSupination','wristCircles']},
+    {day:'Wednesday',label:'WED', theme:'Load',      color:'#F7B731', activation:'wristFlexorStretch',    focus:['eccentricWristCurl','wristCircles']},
+    {day:'Thursday', label:'THU', theme:'Stretch',   color:'#F9A825', activation:'fingerTendonGlide',      focus:['wristExtensorStretch','pronationSupination']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow', color:'#F7B731', activation:'wristFlexorStretch',    focus:['eccentricWristCurl','pronationSupination']},
+  ],
+  2:[
+    {day:'Monday',   label:'MON', theme:'Strength',  color:'#F7B731', activation:'bandPullApart',          focus:['eccentricWristCurl','eccentricWristExtension']},
+    {day:'Tuesday',  label:'TUE', theme:'Mobility',  color:'#F9A825', activation:'fingerTendonGlide',      focus:['pronationSupination','wristCircles']},
+    {day:'Wednesday',label:'WED', theme:'Load',      color:'#F7B731', activation:'bandPullApart',          focus:['eccentricWristExtension','wristFlexorStretch']},
+    {day:'Thursday', label:'THU', theme:'Strength',  color:'#F9A825', activation:'wristFlexorStretch',    focus:['eccentricWristCurl','pronationSupination']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow', color:'#F7B731', activation:'bandPullApart',          focus:['eccentricWristExtension','wristCircles']},
+  ],
+  3:[
+    {day:'Monday',   label:'MON', theme:'Load',      color:'#F7B731', activation:'bandPullApart',          focus:['eccentricWristCurl','pronationSupination']},
+    {day:'Tuesday',  label:'TUE', theme:'Grip',      color:'#F9A825', activation:'fingerTendonGlide',      focus:['eccentricWristExtension','wristCircles']},
+    {day:'Wednesday',label:'WED', theme:'Strength',  color:'#F7B731', activation:'bandPullApart',          focus:['eccentricWristCurl','eccentricWristExtension']},
+    {day:'Thursday', label:'THU', theme:'Mobility',  color:'#F9A825', activation:'wristCircles',            focus:['pronationSupination','fingerTendonGlide']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow', color:'#F7B731', activation:'bandPullApart',          focus:['eccentricWristExtension','pronationSupination']},
+  ],
+};
+
+const SHOULDER_WEEKLY = {
+  1:[
+    {day:'Monday',   label:'MON', theme:'Decompress', color:'#A78BFA', activation:'pendulum',             focus:['shoulderCAR','sleepersStretch']},
+    {day:'Tuesday',  label:'TUE', theme:'Activate',   color:'#C084FC', activation:'wallSlide',            focus:['crossBodyStretch','bandExternalRotation']},
+    {day:'Wednesday',label:'WED', theme:'Stretch',    color:'#A78BFA', activation:'pendulum',             focus:['shoulderCAR','sleepersStretch']},
+    {day:'Thursday', label:'THU', theme:'Mobility',   color:'#C084FC', activation:'shoulderCAR',          focus:['crossBodyStretch','wallSlide']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow',  color:'#A78BFA', activation:'pendulum',             focus:['bandExternalRotation','shoulderCAR']},
+  ],
+  2:[
+    {day:'Monday',   label:'MON', theme:'Strength',   color:'#A78BFA', activation:'facePull',             focus:['bandExternalRotation','ytw']},
+    {day:'Tuesday',  label:'TUE', theme:'Mobility',   color:'#C084FC', activation:'shoulderCAR',          focus:['sleepersStretch','crossBodyStretch']},
+    {day:'Wednesday',label:'WED', theme:'Stability',  color:'#A78BFA', activation:'wallSlide',            focus:['ytw','bandExternalRotation']},
+    {day:'Thursday', label:'THU', theme:'Strength',   color:'#C084FC', activation:'facePull',             focus:['crossBodyStretch','ytw']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow',  color:'#A78BFA', activation:'facePull',             focus:['ytw','shoulderCAR']},
+  ],
+  3:[
+    {day:'Monday',   label:'MON', theme:'Load',       color:'#A78BFA', activation:'facePull',             focus:['ytw','bandExternalRotation']},
+    {day:'Tuesday',  label:'TUE', theme:'Overhead',   color:'#C084FC', activation:'wallSlide',            focus:['shoulderCAR','sleepersStretch']},
+    {day:'Wednesday',label:'WED', theme:'Strength',   color:'#A78BFA', activation:'facePull',             focus:['bandExternalRotation','ytw']},
+    {day:'Thursday', label:'THU', theme:'Mobility',   color:'#C084FC', activation:'shoulderCAR',          focus:['sleepersStretch','crossBodyStretch']},
+    {day:'Friday',   label:'FRI', theme:'Full Flow',  color:'#A78BFA', activation:'facePull',             focus:['ytw','wallSlide']},
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// SKILL PROGRESSION TREES
+// ═══════════════════════════════════════════════════════════════════════
+const SKILL_TRACKS = [
+  { id:'muscle-up', label:'Ring MU', color:'#ea580c', icon:'💫' },
+  { id:'handstand',  label:'Handstand', color:'#7c3aed', icon:'🤸' },
+  { id:'hs-walk',    label:'HS Walk', color:'#0e7490', icon:'👐' },
+  { id:'butterfly',  label:'Butterfly', color:'#15803d', icon:'🦋' },
+];
+
+const SKILL_TREES = {
+  'muscle-up': [
+    { id:'mu-1', name:'Dead Hang (60s)', desc:'Build grip and shoulder stability', prereq:[], icon:'🙌',
+      canyou:'Can you hang from a bar or rings for 60 continuous seconds with straight arms?',
+      training:'Hang from a bar or rings. Start with 3×20s and build to 3×60s over 2 weeks.' },
+    { id:'mu-2', name:'Ring Row (feet elevated)', desc:'Pull strength foundation', prereq:['mu-1'], icon:'↔️',
+      canyou:'Can you do 10 ring rows with feet elevated to hip height, chest to rings?',
+      training:'3×8–12 ring rows. Elevate feet progressively to increase difficulty.' },
+    { id:'mu-3', name:'Bar / Ring Pull-Up (strict)', desc:'Full pull strength required', prereq:['mu-2'], icon:'⬆️',
+      canyou:'Can you do 10 strict pull-ups with full range — dead hang to chin over bar?',
+      training:'Work up to 3×10 strict pull-ups. Dead hang start every rep.' },
+    { id:'mu-4', name:'High Pull-Up (chest to bar)', desc:'Pulling above the bar', prereq:['mu-3'], icon:'🎯',
+      canyou:'Can you pull high enough that your chest touches the bar?',
+      training:'3×5 chest-to-bar pull-ups. Think elbows back, not just up.' },
+    { id:'mu-5', name:'Ring Dip (strict)', desc:'Pressing strength for the transition', prereq:['mu-3'], icon:'📉',
+      canyou:'Can you do 10 strict ring dips from support position to full lockout?',
+      training:'3×8–10 ring dips. Control the descent — 3s down.' },
+    { id:'mu-6', name:'False Grip Hold', desc:'Wrist position for the transition', prereq:['mu-4', 'mu-5'], icon:'🔗',
+      canyou:'Can you hold a false grip hang on rings for 20 seconds without pain?',
+      training:'Build false grip endurance: 3×10–20s holds. Only progress if elbow is pain-free.' },
+    { id:'mu-7', name:'Negative Ring Muscle-Up', desc:'Full transition under control', prereq:['mu-6'], icon:'⬇️',
+      canyou:'Can you lower yourself slowly from support to hang through the ring muscle-up transition?',
+      training:'Jump to support position. Lower slowly through the transition over 5s. 3×3–5 reps.' },
+    { id:'mu-8', name:'Ring Muscle-Up', desc:'The full movement', prereq:['mu-7'], icon:'💫',
+      canyou:'Can you perform a clean ring muscle-up from a dead hang with false grip?',
+      training:'Attempt from dead hang. Focus on timing: explosive pull, then aggressive elbow drive.' },
+  ],
+  'handstand': [
+    { id:'hs-1', name:'Wall Plank (60s)', desc:'Inverted weight bearing', prereq:[], icon:'🧱',
+      canyou:'Can you hold a plank position with feet against a wall for 60 seconds?',
+      training:'Feet on wall, body in plank. Build to 3×60s.' },
+    { id:'hs-2', name:'Box Pike Hold', desc:'Hip over shoulder stacking', prereq:['hs-1'], icon:'📦',
+      canyou:'Can you hold a pike position with hands on floor and feet on a box for 30s?',
+      training:'Hands on floor, feet on box at hip height. Aim for straight body line.' },
+    { id:'hs-3', name:'Wall Walk-Up', desc:'Entry into the full position', prereq:['hs-2'], icon:'🚶',
+      canyou:'Can you walk your feet up a wall until your chest touches and hold for 10s?',
+      training:'Walk feet up the wall and hands toward it until your body is near vertical. 5×10s.' },
+    { id:'hs-4', name:'Chest-to-Wall Handstand (30s)', desc:'Full inverted hold', prereq:['hs-3'], icon:'🤸',
+      canyou:'Can you hold a chest-to-wall handstand for 30 continuous seconds?',
+      training:'Chest facing wall. Work up to 3×30s. Squeeze everything — glutes, quads, core.' },
+    { id:'hs-5', name:'Kick-Up Attempts (freestanding)', desc:'Entry without wall', prereq:['hs-4'], icon:'🦵',
+      canyou:'Can you kick up to a handstand and balance for even 1–2 seconds without the wall?',
+      training:'Kick up consistently. Work on finding balance point. 5–10 attempts per session.' },
+    { id:'hs-6', name:'Freestanding Handstand (10s)', desc:'The target skill', prereq:['hs-5'], icon:'⭐',
+      canyou:'Can you hold a freestanding handstand for 10 seconds?',
+      training:'Aim for consistent 10s holds. Focus on finger pressure for balance corrections.' },
+  ],
+  'hs-walk': [
+    { id:'hsw-1', name:'Shoulder Taps (in HS)', desc:'Single arm tolerance', prereq:['hs-5'], icon:'👋',
+      canyou:'Can you tap one shoulder while in a wall handstand without falling?',
+      training:'In chest-to-wall HS, shift weight and tap opposite shoulder. 3×5 each side.' },
+    { id:'hsw-2', name:'Wall HS Hip Shifts', desc:'Weight transfer practice', prereq:['hsw-1'], icon:'↔️',
+      canyou:'Can you shift your weight side to side in a wall handstand smoothly?',
+      training:'In wall HS, shift weight left and right, lifting each hand slightly.' },
+    { id:'hsw-3', name:'HS Kick-Through Steps', desc:'Controlled step practice', prereq:['hsw-2'], icon:'🦶',
+      canyou:'Can you take 1–2 controlled steps in a freestanding handstand?',
+      training:'From freestanding HS, allow small controlled steps to redirect balance.' },
+    { id:'hsw-4', name:'Handstand Walk (3m)', desc:'The full skill', prereq:['hsw-3'], icon:'👐',
+      canyou:'Can you walk in a handstand for 3 metres (about 10 feet)?',
+      training:'Practise directional walking. Use finger pressure to steer.' },
+  ],
+  'butterfly': [
+    { id:'bf-1', name:'Hollow Body Hold (30s)', desc:'Core position foundation', prereq:[], icon:'🍌',
+      canyou:'Can you hold a hollow body position for 30 seconds — lower back pressed to floor?',
+      training:'Lie on back, arms overhead, lower back pressed to floor. Build to 3×30s.' },
+    { id:'bf-2', name:'Arch Body Hold (30s)', desc:'The opposing position', prereq:['bf-1'], icon:'🌈',
+      canyou:'Can you hold an arch body position face down for 30 seconds?',
+      training:'Lie face down, arms overhead, chest and thighs off floor. 3×30s.' },
+    { id:'bf-3', name:'Kipping Swing (bar)', desc:'The fundamental movement', prereq:['bf-2'], icon:'🌊',
+      canyou:'Can you perform 10 smooth kipping swings on a bar, alternating hollow and arch rhythmically?',
+      training:'Build the hollow→arch→hollow rhythm. Arms stay straight. 3×10 swings.' },
+    { id:'bf-4', name:'Kipping Pull-Up (10 reps)', desc:'Using the kip in pull-up', prereq:['bf-3'], icon:'⬆️',
+      canyou:'Can you do 10 consecutive kipping pull-ups cleanly?',
+      training:'Apply the kip to generate upward momentum. Chin clears bar each rep.' },
+    { id:'bf-5', name:'Chest-to-Bar Kipping (5 reps)', desc:'Higher pull for butterfly timing', prereq:['bf-4'], icon:'🎯',
+      canyou:'Can you do 5 kipping chest-to-bar pull-ups?',
+      training:'Aggressive hip drive + pull. Chest must contact bar.' },
+    { id:'bf-6', name:'Butterfly Pull-Up (3 reps)', desc:'The target movement', prereq:['bf-5'], icon:'🦋',
+      canyou:'Can you perform 3 butterfly pull-ups with the circular arm path and continuous rhythm?',
+      training:'Continuous circular motion. The arms don\'t stop moving. Practice the timing: push away at top, circle forward, pull again.' },
+  ],
+};
+
+// ─── WORKOUT EXERCISES ────────────────────────────────────────────────
+const WORKOUT_TEMPLATES = {
+  skills: [
+    { name:'Ring Muscle-Up Progression', icon:'💫', skillId:'muscle-up', baseLevel:'mu-7',
+      sets:5, reps:'3–5', rest:120, note:'Focus on transition timing' },
+    { name:'Ring Dip', icon:'📉', skillId:'muscle-up', baseLevel:'mu-5',
+      sets:4, reps:'6–8', rest:90, note:'Full lockout at top' },
+    { name:'High Pull-Up', icon:'🎯', skillId:'muscle-up', baseLevel:'mu-4',
+      sets:4, reps:'5', rest:90, note:'Chest to bar every rep' },
+    { name:'False Grip Row', icon:'🔗', skillId:'muscle-up', baseLevel:'mu-6',
+      sets:3, reps:'8', rest:60, note:'Wrist position over the ring' },
+  ],
+  strength: [
+    { name:'Push-Up Variation', icon:'⬆️', skillId:null, baseLevel:null,
+      sets:4, reps:'10–15', rest:60, note:'Full range, elbows track back' },
+    { name:'Ring Row', icon:'↔️', skillId:'muscle-up', baseLevel:'mu-2',
+      sets:4, reps:'10–12', rest:60, note:'Chest to rings' },
+    { name:'Pike Push-Up / HSPU', icon:'🤸', skillId:'handstand', baseLevel:'hs-3',
+      sets:3, reps:'8–10', rest:90, note:'Forehead to floor' },
+    { name:'L-Sit Hold', icon:'📐', skillId:null, baseLevel:null,
+      sets:3, reps:'20–30s', rest:60, note:'Legs parallel to floor' },
+    { name:'Hollow Body Hold', icon:'🍌', skillId:'butterfly', baseLevel:'bf-1',
+      sets:3, reps:'30s', rest:45, note:'Lower back stays pressed to floor' },
+  ],
+  handstand: [
+    { name:'Handstand Progression', icon:'🤸', skillId:'handstand', baseLevel:'hs-4',
+      sets:5, reps:'30s', rest:60, note:'Quality over time' },
+    { name:'Pike Push-Up', icon:'⬇️', skillId:'handstand', baseLevel:'hs-2',
+      sets:4, reps:'8–10', rest:60, note:'Slow descent' },
+    { name:'Shoulder Tap (wall HS)', icon:'👋', skillId:'hs-walk', baseLevel:'hsw-1',
+      sets:3, reps:'5 each', rest:60, note:'Control the shift' },
+  ],
+  conditioning: [
+    { name:'Pull-Up', icon:'⬆️', skillId:'butterfly', baseLevel:'bf-4',
+      sets:4, reps:'Max', rest:90, note:'Full range of motion' },
+    { name:'Dip', icon:'📉', skillId:'muscle-up', baseLevel:'mu-5',
+      sets:4, reps:'Max', rest:90, note:'Lockout at top' },
+    { name:'Burpee', icon:'🔥', skillId:null, baseLevel:null,
+      sets:3, reps:'15', rest:60, note:'Consistent pace' },
+    { name:'Box Jump', icon:'📦', skillId:null, baseLevel:null,
+      sets:3, reps:'10', rest:60, note:'Soft landing' },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+function tagBadge(tag) {
+  const c = TAG_C[tag] || { bg:'#eee', text:'#555' };
+  return `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;background:${c.bg};color:${c.text};text-transform:uppercase;letter-spacing:0.05em;">${tag}</span>`;
+}
+
+function renderExCard(ex, color, pain, badgeText) {
+  const id = 'ex-' + ex.name.replace(/\W/g,'');
+  const band = getPainBand(pain);
+  const cfg = PAIN_CFG[band];
+  const mod = ex.mods?.[band];
+  const isModified = mod && band !== 'low';
+  const open = STATE.openExCards[id];
+
+  return `
+  <div class="ex-card ${open?'open':''}" id="${id}">
+    <button class="ex-card-header" onclick="toggleExCard('${id}','${color}')">
+      <span class="ex-icon">${ex.icon}</span>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span class="ex-name">${ex.name}</span>
+          ${badgeText ? `<span style="font-size:9px;background:${color}20;color:${color};padding:2px 7px;border-radius:99px;font-weight:700;text-transform:uppercase;">${badgeText}</span>` : ''}
+          ${isModified ? `<span style="font-size:9px;padding:2px 7px;border-radius:99px;font-weight:700;background:${band==='mid'?'#fff3cd':'#ffe5e5'};color:${band==='mid'?'#856404':'#c0392b'};">${band==='mid'?'MODIFIED':'UNLOADED'}</span>` : ''}
+        </div>
+        <div class="ex-sets">${ex.sets||ex.dur}</div>
+      </div>
+      ${tagBadge(ex.tag)}
+      <span style="font-size:12px;color:#ccc;transform:${open?'rotate(180deg)':'none'};transition:transform 0.2s;margin-left:4px;">▾</span>
+    </button>
+    ${open ? `
+    <div class="ex-body">
+      ${isModified ? `<div class="ex-mod-banner" style="background:${cfg.bg};color:${cfg.color};border-color:${cfg.color}30;">
+        <strong>Today's modification:</strong> ${mod}
+      </div>` : ''}
+      <div style="padding:12px 0 0;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#bbb;margin-bottom:9px;">HOW TO DO IT</div>
+        ${ex.steps.map((s,i)=>`
+          <div class="step-row">
+            <span class="step-num" style="background:${color}20;color:${color};">${i+1}</span>
+            <span class="step-text">${s}</span>
+          </div>`).join('')}
+        <div class="feel-box" style="background:#f9fafb;border-color:${color};">
+          <div class="feel-label" style="color:${color};">WHAT YOU SHOULD FEEL</div>
+          <div class="feel-text">${ex.feel}</div>
+        </div>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+function toggleExCard(id, color) {
+  STATE.openExCards[id] = !STATE.openExCards[id];
+  const el = document.getElementById(id);
+  if (!el) return;
+  // re-render the card in place
+  const parent = el.parentNode;
+  const cards = parent.querySelectorAll('.ex-card');
+  // We'll just toggle the open class and re-render body inline
+  el.classList.toggle('open', STATE.openExCards[id]);
+  // Simpler: trigger full re-render of the module
+  if (STATE.rehabModule) renderRehabModuleView(STATE.rehabModule);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TAB NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════
+function showTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  const tabs = ['today','train','skills','rehab','log'];
+  const idx = tabs.indexOf(tab);
+  document.querySelectorAll('.tab-btn')[idx]?.classList.add('active');
+  STATE.activeTab = tab;
+  if (tab === 'today') renderToday();
+  if (tab === 'skills') renderSkills();
+  if (tab === 'rehab') renderRehabDashboard();
+  if (tab === 'log') renderLog();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TODAY SCREEN
+// ═══════════════════════════════════════════════════════════════════════
+function renderToday() {
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date();
+  document.getElementById('today-date').textContent =
+    `${days[now.getDay()].toUpperCase()} · ${now.getDate()} ${months[now.getMonth()].toUpperCase()} ${now.getFullYear()}`;
+
+  // Warm-up exercises
+  const wuHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#FB923C', 0)).join('');
+  document.getElementById('warmup-exercises').innerHTML = wuHTML;
+
+  // Cool-down exercises
+  const cdHTML = COOL_DOWN.map(ex => renderExCard(ex, '#A78BFA', 0)).join('');
+  document.getElementById('cooldown-exercises').innerHTML = cdHTML;
+
+  // Workout preview
+  renderTodayWorkoutPreview();
+
+  // Update statuses
+  ['warmup','prep','workout','cooldown'].forEach(k => {
+    const el = document.getElementById('status-' + k);
+    if (el) el.textContent = STATE.blocksDone[k] ? '✅' : '⚪';
+  });
+  document.getElementById('status-warmup').textContent = STATE.blocksDone.warmup ? '✅' : '🟠';
+
+  // Session complete
+  const allDone = Object.values(STATE.blocksDone).every(Boolean);
+  document.getElementById('session-complete-banner').classList.toggle('hidden', !allDone);
+}
+
+function renderTodayWorkoutPreview() {
+  const preview = document.getElementById('today-workout-preview');
+  const sub = document.getElementById('workout-block-sub');
+  if (!preview) return;
+  preview.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="pill active" onclick="setTodayWorkout('skills')">🎯 Skills</button>
+      <button class="pill" onclick="setTodayWorkout('strength')">💪 Strength</button>
+      <button class="pill" onclick="setTodayWorkout('handstand')">🤸 Handstand</button>
+      <button class="pill" onclick="setTodayWorkout('conditioning')">🔥 Conditioning</button>
+    </div>
+    <div style="font-size:13px;color:var(--mid);">Tap a type above, then go to Train.</div>
+  `;
+}
+
+function setTodayWorkout(type) {
+  STATE.workoutType = type;
+  const names = { skills:'Skill Session', strength:'Strength', handstand:'Handstand', conditioning:'Conditioning' };
+  document.getElementById('workout-block-title').textContent = names[type] || 'Workout';
+  document.getElementById('workout-block-sub').textContent = `${names[type]} · ${WORKOUT_TEMPLATES[type].length} exercises`;
+}
+
+function toggleBlock(name) {
+  const body = document.getElementById('body-' + name);
+  if (body) body.classList.toggle('hidden');
+}
+
+function markBlockDone(name) {
+  STATE.blocksDone[name] = true;
+  const el = document.getElementById('status-' + name);
+  if (el) el.textContent = '✅';
+  const body = document.getElementById('body-' + name);
+  if (body) body.classList.add('hidden');
+
+  // Check all done
+  const allDone = Object.values(STATE.blocksDone).every(Boolean);
+  if (allDone) {
+    document.getElementById('session-complete-banner').classList.remove('hidden');
+    logSession();
+  }
+  saveState();
+}
+
+function logSession() {
+  const now = new Date();
+  STATE.sessionLog.unshift({
+    date: now.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' }),
+    type: STATE.workoutType || 'full',
+    blocks: Object.keys(STATE.blocksDone).filter(k => STATE.blocksDone[k]),
+    timestamp: now.getTime(),
+  });
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// REHAB MODULE SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+const REHAB_MODULES = {
+  knee:     { title:'Knee Rehab',      icon:'🦵', color:'#4ECDC4', lib:KNEE_LIB,     weekly:KNEE_WEEKLY,     phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–12'}, disclaimer:'Grade IV chondropathy + meniscal extrusion. Stop any exercise at >2/10 pain or locking.' },
+  elbow:    { title:'Elbow Rehab',     icon:'💪', color:'#F7B731', lib:ELBOW_LIB,    weekly:ELBOW_WEEKLY,    phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–10'}, disclaimer:'Bilateral medial epicondyle tendinopathy. No forced gripping under load. False grip gated to Phase 3.' },
+  shoulder: { title:'Shoulder Rehab',  icon:'🫁', color:'#A78BFA', lib:SHOULDER_LIB, weekly:SHOULDER_WEEKLY, phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–10'}, disclaimer:'Stop at any pinching above 2/10 in overhead range.' },
+  mobility: { title:'Mobility Warmup', icon:'🌅', color:'#FB923C', lib:null,          weekly:null,            phases:{}, disclaimer:null },
+};
+
+function renderRehabDashboard() {
+  const configs = [
+    { key:'knee',     color:'#4ECDC4', icon:'🦵', label:'Knee Rehab',     sub:'Grade IV chondropathy · Meniscal · 3 phases' },
+    { key:'elbow',    color:'#F7B731', icon:'💪', label:'Elbow Rehab',     sub:'Golfer\'s · Tennis · Wrist/Forearm' },
+    { key:'shoulder', color:'#A78BFA', icon:'🫁', label:'Shoulder Rehab',  sub:'Rotator Cuff · Overhead Mobility' },
+  ];
+  document.getElementById('rehab-module-cards').innerHTML = configs.map(m => `
+    <button onclick="showRehabModule('${m.key}')" style="width:100%;background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+      <div style="width:44px;height:44px;border-radius:12px;background:${m.color}20;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${m.icon}</div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:700;color:var(--ink);">${m.label}</div>
+        <div style="font-size:11px;color:var(--mid);margin-top:2px;line-height:1.4;">${m.sub}</div>
+      </div>
+      <span style="font-size:18px;color:${m.color};">→</span>
+    </button>
+  `).join('');
+}
+
+function showRehabModule(key) {
+  STATE.rehabModule = key;
+  document.getElementById('rehab-dashboard').classList.add('hidden');
+  document.getElementById('rehab-module-view').classList.remove('hidden');
+  renderRehabModuleView(key);
+}
+
+function hideRehabModule() {
+  STATE.rehabModule = null;
+  document.getElementById('rehab-dashboard').classList.remove('hidden');
+  document.getElementById('rehab-module-view').classList.add('hidden');
+}
+
+function renderRehabModuleView(key) {
+  const view = document.getElementById('rehab-module-view');
+  if (key === 'mobility') { renderMobilityModule(view); return; }
+
+  const m = REHAB_MODULES[key];
+  const rs = STATE.rehabState[key];
+  const schedule = m.weekly[rs.phase];
+  const session = schedule[rs.dayIdx];
+  const lib = m.lib;
+  const pain = rs.pain;
+  const band = getPainBand(pain);
+  const cfg = PAIN_CFG[band];
+
+  // Build exercise list
+  const firstEx = Object.values(lib)[0];
+  const exKeys = [session.activation, ...session.focus];
+  const exHTML = `
+    ${renderExCard(firstEx, session.color, pain, 'always first')}
+    ${exKeys.map(k => renderExCard(lib[k], session.color, pain, k === session.activation ? 'always on' : '')).join('')}
+  `;
+
+  // Phase tabs
+  const phaseTabsHTML = [1,2,3].map(p => `
+    <button class="phase-tab ${rs.phase===p?'active':''}" onclick="setRehabPhase('${key}',${p})" style="${rs.phase===p?`border-color:${m.color};background:${m.color}15;`:''}">
+      <div class="phase-tab-dot" style="background:${m.color};"></div>
+      <div class="phase-tab-label" style="color:${rs.phase===p?m.color:'#bbb'};">Phase ${p}</div>
+      <div class="phase-tab-sub">${m.phases[p]||''}</div>
+    </button>
+  `).join('');
+
+  // Day selector
+  const dayHTML = schedule.map((s,i) => `
+    <button class="day-btn" onclick="setRehabDay('${key}',${i})" style="background:${rs.dayIdx===i?s.color:'#f0f2f4'};">
+      <div class="day-btn-label" style="color:${rs.dayIdx===i?'rgba(255,255,255,0.9)':'#aaa'};">${s.label}</div>
+      <div class="day-btn-theme" style="color:${rs.dayIdx===i?'rgba(255,255,255,0.7)':'#ccc'};">${s.theme}</div>
+    </button>
+  `).join('');
+
+  // Streak dots
+  const streakHTML = Array.from({length:15},(_,i) => `
+    <button class="streak-dot" onclick="toggleStreakDot('${key}',${i})" style="background:${(STATE.rehabState[key].streak||{})[i]?m.color:'#f5f6f8'};color:${(STATE.rehabState[key].streak||{})[i]?'#fff':'#ccc'};">${(STATE.rehabState[key].streak||{})[i]?'✓':i+1}</button>
+  `).join('');
+
+  view.innerHTML = `
+    <div style="font-family:'DM Sans',sans-serif;max-width:520px;margin:0 auto;padding-bottom:60px;">
+      <!-- Sticky header -->
+      <div style="background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 12px) 16px 12px;position:sticky;top:0;z-index:10;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <button class="back-btn" onclick="hideRehabModule()">←</button>
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,${m.color},${m.color}88);display:flex;align-items:center;justify-content:center;font-size:18px;">${m.icon}</div>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:700;color:var(--ink);">${m.title}</div>
+            <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.04em;">ATLAS · Rehab Module</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;font-weight:600;color:${m.color};">${session.theme}</div>
+            <div style="font-size:10px;color:#bbb;">10–12 min</div>
+          </div>
+        </div>
+        <div class="phase-tabs">${phaseTabsHTML}</div>
+        <div class="day-scroll">${dayHTML}</div>
+      </div>
+
+      <div style="padding:14px 16px 0;">
+        <!-- Pain dial -->
+        <div class="pain-dial" style="background:${cfg.bg};border-color:${cfg.color}40;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--ink);">How's the pain today?</div>
+              <div style="font-size:11px;color:${cfg.color};font-weight:600;margin-top:1px;">${cfg.label} · ${cfg.desc}</div>
+            </div>
+            <div style="font-size:26px;font-weight:800;color:${cfg.color};line-height:1;">${pain}<span style="font-size:12px;color:#bbb;font-weight:400;">/10</span></div>
+          </div>
+          <input type="range" min="0" max="9" value="${pain}" oninput="setRehabPain('${key}',this.value)"
+            style="accent-color:${cfg.color};background:linear-gradient(to right,${cfg.color} ${pain*11.1}%,#e0e0e0 ${pain*11.1}%);">
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:#bbb;">
+            <span>0 None</span><span>5 Moderate</span><span>9 Severe</span>
+          </div>
+          ${band!=='low'?`<div style="margin-top:9px;background:${cfg.color}15;border-radius:8px;padding:8px 10px;font-size:11px;color:${cfg.color};line-height:1.5;font-weight:500;">
+            ${band==='mid'?'⚠️ Exercises auto-modified — reduced load.':'🔴 High pain day — unloaded alternatives only.'}
+          </div>`:''}
+        </div>
+
+        ${m.disclaimer?`<div class="notice">⚠️ ${m.disclaimer}</div>`:''}
+
+        <!-- Session info -->
+        <div style="margin-bottom:12px;padding:12px 14px;background:#fff;border-radius:12px;border:1px solid var(--border);border-left:4px solid ${session.color};">
+          <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:2px;">${session.day} — ${session.theme}</div>
+          <div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:10px;background:${session.color}20;color:${session.color};padding:2px 8px;border-radius:99px;font-weight:600;">${m.phases[rs.phase]||''}</span>
+            <span style="font-size:10px;background:var(--surface);color:var(--mid);padding:2px 8px;border-radius:99px;">4 exercises · 10–12 min</span>
+          </div>
+        </div>
+
+        <!-- Streak -->
+        <div style="background:#fff;border-radius:12px;padding:12px 14px;border:1px solid var(--border);margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:12px;font-weight:700;color:var(--ink);">Phase ${rs.phase} Streak</span>
+            <span style="font-size:11px;color:#bbb;">${Object.values(STATE.rehabState[key].streak||{}).filter(Boolean).length} / 15</span>
+          </div>
+          <div class="streak-dots">${streakHTML}</div>
+        </div>
+
+        <div style="font-size:10px;font-weight:700;color:#ccc;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Today's 4 exercises · tap to expand</div>
+        ${exHTML}
+
+        <div style="margin-top:12px;padding:11px 13px;background:#fff;border-radius:10px;border:1px solid var(--border);font-size:11px;color:#aaa;line-height:1.65;">
+          <strong style="color:#666;">Stop rule:</strong> &gt;2/10 pain or any sharp/locking sensation → stop immediately.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMobilityModule(view) {
+  const exHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#FB923C', 0)).join('');
+  view.innerHTML = `
+    <div style="font-family:'DM Sans',sans-serif;max-width:520px;margin:0 auto;padding-bottom:60px;">
+      <div style="background:#fff;border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 12px) 16px 12px;position:sticky;top:0;z-index:10;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="back-btn" onclick="hideRehabModule()">←</button>
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#FB923C,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:18px;">🌅</div>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:700;color:var(--ink);">Mobility Warm-up</div>
+            <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.04em;">Full Body Flow · Pre-Workout</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;font-weight:600;color:#FB923C;">5–8 min</div>
+            <div style="font-size:10px;color:#bbb;">8 movements</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 16px 0;">
+        <div style="background:#fff4ed;border:1.5px solid #fed7aa;border-radius:13px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;font-family:'Barlow Condensed',sans-serif;letter-spacing:-0.01em;">Run in order before every session</div>
+          <div style="font-size:12px;color:var(--mid);line-height:1.6;">Slow, deliberate movement through full range is the point. 5–8 minutes depending on pace.</div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:#ccc;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">8 movements in sequence · tap to expand</div>
+        ${exHTML}
+      </div>
+    </div>`;
+}
+
+function setRehabPhase(key, phase) {
+  STATE.rehabState[key].phase = phase;
+  STATE.rehabState[key].dayIdx = 0;
+  saveState();
+  renderRehabModuleView(key);
+}
+
+function setRehabDay(key, idx) {
+  STATE.rehabState[key].dayIdx = idx;
+  saveState();
+  renderRehabModuleView(key);
+}
+
+function setRehabPain(key, val) {
+  STATE.rehabState[key].pain = Number(val);
+  saveState();
+  renderRehabModuleView(key);
+}
+
+function toggleStreakDot(key, idx) {
+  if (!STATE.rehabState[key].streak) STATE.rehabState[key].streak = {};
+  STATE.rehabState[key].streak[idx] = !STATE.rehabState[key].streak[idx];
+  saveState();
+  renderRehabModuleView(key);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// WORKOUT PLAYER
+// ═══════════════════════════════════════════════════════════════════════
+function startWorkout(type) {
+  STATE.workoutType = type;
+  STATE.currentExercises = WORKOUT_TEMPLATES[type] || [];
+  STATE.workoutStep = 0;
+  STATE.currentSetIdx = 0;
+  STATE.sessionStart = Date.now();
+
+  const names = { skills:'Skill Session', strength:'Strength', handstand:'Handstand', conditioning:'Conditioning' };
+  document.getElementById('player-title').textContent = names[type] || type;
+
+  document.getElementById('train-home').classList.add('hidden');
+  document.getElementById('train-player').classList.remove('hidden');
+  renderPlayerStep();
+}
+
+function exitWorkout() {
+  if (STATE.restTimer) { clearInterval(STATE.restTimer); STATE.restTimer = null; }
+  document.getElementById('train-home').classList.remove('hidden');
+  document.getElementById('train-player').classList.add('hidden');
+}
+
+function renderPlayerStep() {
+  const exercises = STATE.currentExercises;
+  const step = STATE.workoutStep;
+  const total = exercises.length;
+  const pct = Math.round((step / total) * 100);
+
+  document.getElementById('player-counter').textContent = `${step + 1} / ${total}`;
+  document.getElementById('player-progress-fill').style.width = pct + '%';
+
+  if (step >= total) { renderWorkoutComplete(); return; }
+
+  const ex = exercises[step];
+  const level = STATE.skillLevels[ex.skillId] || {};
+  const currentLevelId = level.currentLevel || ex.baseLevel;
+  const skillTree = ex.skillId ? SKILL_TREES[ex.skillId] : null;
+  const currentNode = skillTree?.find(n => n.id === currentLevelId);
+  const isScaled = currentNode && currentLevelId !== ex.baseLevel;
+
+  // Build set tracker
+  const totalSets = ex.sets;
+  const currentSet = STATE.currentSetIdx;
+  const setDotsHTML = Array.from({length:totalSets},(_,i) =>
+    `<div class="set-dot ${i < currentSet ? 'done' : i === currentSet ? 'current' : ''}" onclick="if(${i}===${currentSet})completeSet()">${i < currentSet ? '✓' : i+1}</div>`
+  ).join('');
+
+  // Skill scaling
+  let scalingHTML = '';
+  if (skillTree) {
+    const levelIdx = skillTree.findIndex(n => n.id === currentLevelId);
+    const scalingSteps = skillTree.map((n, i) => {
+      const isDone = i < levelIdx;
+      const isCurrent = i === levelIdx;
+      const isLocked = i > levelIdx;
+      return `<div class="scale-step ${isDone?'done':isCurrent?'current':'locked'}">${isDone?'✓ ':isCurrent?'▶ ':''} ${n.name}</div>`;
+    }).join('');
+
+    scalingHTML = `
+      <div class="scale-card">
+        <div class="scale-header">
+          <span class="scale-title">📊 Skill Level: ${currentNode?.name || 'Base'}</span>
+          <span class="scale-level">Level ${skillTree.findIndex(n=>n.id===currentLevelId)+1} / ${skillTree.length}</span>
+        </div>
+        <div class="scale-steps">${scalingSteps}</div>
+        ${currentNode ? `<div style="margin-top:10px;font-size:12px;color:var(--mid);line-height:1.5;"><strong>Today's focus:</strong> ${currentNode.training}</div>` : ''}
+      </div>`;
+  }
+
+  // Can you do this card (shown after last set if there's a next level)
+  const nextNode = skillTree && skillTree[skillTree.findIndex(n=>n.id===currentLevelId)+1];
+  const canYouHTML = currentSet >= totalSets && nextNode ? `
+    <div class="canyou-card">
+      <div class="canyou-q">Can you do this?</div>
+      <div class="canyou-sub">${nextNode.canyou}</div>
+      <div style="background:var(--surface);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--mid);">
+        <strong>Next level:</strong> ${nextNode.name}
+      </div>
+      <div class="canyou-btns">
+        <button class="canyou-yes" onclick="advanceSkillLevel('${ex.skillId}','${nextNode.id}')">✓ Yes, I can!</button>
+        <button class="canyou-no" onclick="stayAtLevel()">Not yet</button>
+      </div>
+    </div>` : '';
+
+  document.getElementById('player-content').innerHTML = `
+    <div class="exercise-display">
+      <div class="ex-display-icon">${ex.icon}</div>
+      <div class="ex-display-name">${currentNode ? currentNode.name : ex.name}</div>
+      <div class="ex-display-sets">${totalSets} sets × ${ex.reps}</div>
+      ${ex.note ? `<div style="font-size:13px;color:var(--mid);text-align:center;margin-bottom:12px;font-style:italic;">${ex.note}</div>` : ''}
+
+      <div class="set-tracker">${setDotsHTML}</div>
+
+      ${currentSet < totalSets ? `<button class="complete-set-btn" onclick="completeSet()">✓ Complete Set ${currentSet + 1}</button>` : ''}
+
+      ${canYouHTML}
+
+      ${!canYouHTML && currentSet >= totalSets ? `<button class="complete-set-btn" style="background:var(--green);" onclick="nextExercise()">Next Exercise →</button>` : ''}
+
+      ${scalingHTML}
+
+      ${currentNode ? `
+      <div class="card-sm" style="margin-top:10px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--subtle);margin-bottom:6px;">CURRENT PROGRESSION</div>
+        <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;">${currentNode.name}</div>
+        <div style="font-size:13px;color:var(--mid);line-height:1.55;">${currentNode.desc}</div>
+      </div>` : ''}
+    </div>`;
+}
+
+function completeSet() {
+  const ex = STATE.currentExercises[STATE.workoutStep];
+  STATE.currentSetIdx++;
+
+  if (STATE.currentSetIdx < ex.sets) {
+    // Show rest timer
+    showRestTimer(ex.rest, () => renderPlayerStep());
+  } else {
+    renderPlayerStep();
+  }
+}
+
+function showRestTimer(seconds, callback) {
+  let remaining = seconds;
+  const overlay = document.createElement('div');
+  overlay.className = 'rest-overlay';
+  overlay.id = 'rest-overlay';
+  overlay.innerHTML = `
+    <div class="rest-label">REST</div>
+    <div class="rest-time" id="rest-time-display">${remaining}s</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);">Next set starting soon</div>
+    <button class="rest-skip" onclick="skipRest()">Skip Rest</button>`;
+  document.body.appendChild(overlay);
+
+  STATE.restTimer = setInterval(() => {
+    remaining--;
+    const el = document.getElementById('rest-time-display');
+    if (el) el.textContent = remaining + 's';
+    if (remaining <= 0) {
+      skipRest();
+      callback();
+    }
+  }, 1000);
+}
+
+function skipRest() {
+  if (STATE.restTimer) { clearInterval(STATE.restTimer); STATE.restTimer = null; }
+  const overlay = document.getElementById('rest-overlay');
+  if (overlay) overlay.remove();
+}
+
+function nextExercise() {
+  STATE.workoutStep++;
+  STATE.currentSetIdx = 0;
+  renderPlayerStep();
+}
+
+function advanceSkillLevel(skillId, newLevelId) {
+  if (!STATE.skillLevels[skillId]) STATE.skillLevels[skillId] = {};
+  STATE.skillLevels[skillId].currentLevel = newLevelId;
+  STATE.skillLevels[skillId].achieved = STATE.skillLevels[skillId].achieved || [];
+  if (!STATE.skillLevels[skillId].achieved.includes(newLevelId)) {
+    STATE.skillLevels[skillId].achieved.push(newLevelId);
+  }
+  saveState();
+  nextExercise();
+}
+
+function stayAtLevel() {
+  // Log the attempt
+  const ex = STATE.currentExercises[STATE.workoutStep];
+  if (ex.skillId) {
+    if (!STATE.skillLevels[ex.skillId]) STATE.skillLevels[ex.skillId] = {};
+    if (!STATE.skillLevels[ex.skillId].attempts) STATE.skillLevels[ex.skillId].attempts = [];
+    STATE.skillLevels[ex.skillId].attempts.push(Date.now());
+  }
+  saveState();
+  nextExercise();
+}
+
+function renderWorkoutComplete() {
+  const elapsed = Math.round((Date.now() - STATE.sessionStart) / 60000);
+  const skillsWorked = [...new Set(STATE.currentExercises.filter(e => e.skillId).map(e => e.skillId))];
+
+  STATE.sessionLog.unshift({
+    date: new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),
+    type: STATE.workoutType,
+    duration: elapsed,
+    skills: skillsWorked,
+    timestamp: Date.now(),
+  });
+  STATE.blocksDone.workout = true;
+  saveState();
+
+  document.getElementById('player-content').innerHTML = `
+    <div class="complete-screen">
+      <div class="complete-emoji">🏆</div>
+      <div class="complete-title">WORKOUT DONE</div>
+      <div class="complete-sub">${elapsed} min · ${STATE.currentExercises.length} exercises</div>
+      <div class="complete-stats">
+        <div class="complete-stat">
+          <div class="complete-stat-val">${elapsed}</div>
+          <div class="complete-stat-label">Minutes</div>
+        </div>
+        <div class="complete-stat">
+          <div class="complete-stat-val">${STATE.currentExercises.length}</div>
+          <div class="complete-stat-label">Exercises</div>
+        </div>
+        <div class="complete-stat">
+          <div class="complete-stat-val">${skillsWorked.length}</div>
+          <div class="complete-stat-label">Skills</div>
+        </div>
+      </div>
+      <div style="width:100%;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;text-align:left;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:var(--subtle);margin-bottom:10px;">DO YOUR COOL-DOWN NEXT</div>
+        ${COOL_DOWN.slice(0,3).map(ex => `
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:18px;">${ex.icon}</span>
+            <div style="font-size:13px;font-weight:500;color:var(--ink);">${ex.name}</div>
+            <div style="font-size:12px;color:var(--mid);margin-left:auto;">${ex.dur}</div>
+          </div>`).join('')}
+      </div>
+      <button class="btn-primary" onclick="exitWorkout();showTab('today')">Back to Today</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SKILLS SCREEN
+// ═══════════════════════════════════════════════════════════════════════
+function renderSkills() {
+  // Track pills
+  document.getElementById('skills-track-row').innerHTML = SKILL_TRACKS.map(t => `
+    <button class="track-pill" onclick="setSkillTrack('${t.id}')"
+      style="border-color:${STATE.skillTrack===t.id?t.color:'var(--border)'};background:${STATE.skillTrack===t.id?t.color+'15':'#fff'};color:${STATE.skillTrack===t.id?t.color:'var(--mid)'};">
+      ${t.icon} ${t.label}
+    </button>`).join('');
+
+  renderSkillTree(STATE.skillTrack);
+}
+
+function setSkillTrack(id) {
+  STATE.skillTrack = id;
+  renderSkills();
+}
+
+function renderSkillTree(trackId) {
+  const tree = SKILL_TREES[trackId];
+  const track = SKILL_TRACKS.find(t => t.id === trackId);
+  if (!tree || !track) return;
+
+  const levelData = STATE.skillLevels[trackId] || {};
+  const achieved = levelData.achieved || [];
+  const currentLevel = levelData.currentLevel;
+
+  const html = tree.map((node, i) => {
+    const isAchieved = achieved.includes(node.id);
+    const isCurrent = node.id === currentLevel;
+    const prereqsMet = node.prereq.every(p => achieved.includes(p));
+    const isAvailable = !isAchieved && prereqsMet;
+    const isLocked = !isAchieved && !prereqsMet;
+
+    const statusColor = isAchieved ? '#15803d' : isCurrent ? track.color : isAvailable ? '#1d4ed8' : '#94a3b8';
+    const statusIcon = isAchieved ? '✓' : isCurrent ? '▶' : isAvailable ? '○' : '🔒';
+    const nodeClass = isAchieved ? 'achieved' : isCurrent ? 'in-progress' : isLocked ? 'locked' : '';
+
+    // Progress bar for in-progress
+    const attempts = levelData.attempts?.length || 0;
+    const progPct = isCurrent ? Math.min(100, attempts * 20) : isAchieved ? 100 : 0;
+
+    return `
+      ${i > 0 ? `<div class="skill-connector ${isAchieved?'achieved':''}" style="background:${isAchieved?'#86efac':'var(--border)'};"></div>` : ''}
+      <div class="skill-node ${nodeClass}" onclick="showSkillDetail('${trackId}','${node.id}')">
+        <div class="skill-dot" style="border-color:${statusColor};background:${isAchieved||isCurrent?statusColor:'transparent'};">
+          <span style="color:${isAchieved||isCurrent?'#fff':statusColor};font-size:13px;">${statusIcon}</span>
+        </div>
+        <div class="skill-info">
+          <div class="skill-name">${node.name}</div>
+          <div class="skill-sub">${node.desc}</div>
+          ${isCurrent||isAchieved ? `<div class="skill-prog-bar"><div class="skill-prog-fill" style="width:${progPct}%;background:${statusColor};"></div></div>` : ''}
+        </div>
+        <div style="font-size:11px;color:${statusColor};font-weight:700;white-space:nowrap;">
+          ${isAchieved?'Done':isCurrent?'Active':isAvailable?'Ready':'Locked'}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('skills-tree-list').innerHTML = html;
+}
+
+function showSkillDetail(trackId, nodeId) {
+  const track = SKILL_TRACKS.find(t => t.id === trackId);
+  const tree = SKILL_TREES[trackId];
+  const node = tree.find(n => n.id === nodeId);
+  if (!node) return;
+
+  const levelData = STATE.skillLevels[trackId] || {};
+  const achieved = levelData.achieved || [];
+  const isAchieved = achieved.includes(nodeId);
+  const isCurrent = levelData.currentLevel === nodeId;
+
+  // Simple modal overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:300;display:flex;align-items:flex-end;';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:520px;margin:0 auto;max-height:85vh;overflow-y:auto;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="font-size:32px;">${node.icon}</div>
+        <div style="flex:1;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--ink);">${node.name}</div>
+          <div style="font-size:12px;color:var(--mid);">${track.label} progression</div>
+        </div>
+        <button onclick="this.closest('.overlay-sheet').remove()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;font-weight:600;">✕</button>
+      </div>
+      <div style="background:var(--surface);border-radius:10px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--subtle);margin-bottom:6px;">CAN YOU DO THIS?</div>
+        <div style="font-size:14px;color:var(--ink);line-height:1.6;">${node.canyou}</div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--subtle);margin-bottom:6px;">HOW TO TRAIN IT</div>
+        <div style="font-size:14px;color:var(--ink2);line-height:1.65;">${node.training}</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        ${!isAchieved ? `<button onclick="markSkillAchieved('${trackId}','${nodeId}');this.closest('div[style*=inset]').remove();renderSkills();" style="flex:1;padding:13px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">✓ I can do this</button>` : `<div style="flex:1;padding:13px;background:#f0fdf4;color:var(--green);border-radius:10px;font-size:15px;font-weight:700;text-align:center;">✓ Achieved</div>`}
+        <button onclick="this.closest('div[style*=inset]').remove();" style="padding:13px 20px;background:var(--surface);color:var(--mid);border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">Close</button>
+      </div>
+    </div>`;
+  overlay.className = 'overlay-sheet';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function markSkillAchieved(trackId, nodeId) {
+  if (!STATE.skillLevels[trackId]) STATE.skillLevels[trackId] = {};
+  if (!STATE.skillLevels[trackId].achieved) STATE.skillLevels[trackId].achieved = [];
+  if (!STATE.skillLevels[trackId].achieved.includes(nodeId)) {
+    STATE.skillLevels[trackId].achieved.push(nodeId);
+  }
+
+  // Auto-advance to next level
+  const tree = SKILL_TREES[trackId];
+  const idx = tree.findIndex(n => n.id === nodeId);
+  const next = tree[idx + 1];
+  if (next) {
+    const prereqsMet = next.prereq.every(p => STATE.skillLevels[trackId].achieved.includes(p));
+    if (prereqsMet) STATE.skillLevels[trackId].currentLevel = next.id;
+  }
+  saveState();
+  renderSkills();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LOG SCREEN
+// ═══════════════════════════════════════════════════════════════════════
+function renderLog() {
+  const list = document.getElementById('log-list');
+  if (!STATE.sessionLog.length) {
+    list.innerHTML = `<div style="text-align:center;padding:48px 24px;color:var(--mid);">
+      <div style="font-size:40px;margin-bottom:12px;">📋</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;">No sessions yet</div>
+      <div style="font-size:14px;margin-top:6px;">Complete a session to see it here.</div>
+    </div>`;
+    return;
+  }
+
+  const typeColors = { skills:'#ea580c', strength:'#1d4ed8', handstand:'#7c3aed', conditioning:'#be123c', full:'#15803d' };
+  list.innerHTML = STATE.sessionLog.slice(0, 20).map(s => `
+    <div class="hist-card">
+      <div class="hist-date">${s.date}</div>
+      <div class="hist-meta">${s.duration ? s.duration + ' min · ' : ''}${s.type || 'Full session'}</div>
+      ${s.skills?.length ? `<div class="hist-tags">${s.skills.map(sk => `<span class="hist-tag" style="background:${typeColors[sk]||'#f0f0f0'}20;color:${typeColors[sk]||'#888'};">${sk}</span>`).join('')}</div>` : ''}
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════
+function init() {
+  // Set today's date
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date();
+  const dateEl = document.getElementById('today-date');
+  if (dateEl) dateEl.textContent = `${days[now.getDay()].toUpperCase()} · ${now.getDate()} ${months[now.getMonth()].toUpperCase()} ${now.getFullYear()}`;
+
+  // Render initial screens
+  renderToday();
+  renderRehabDashboard();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
