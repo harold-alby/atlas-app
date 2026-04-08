@@ -3488,49 +3488,55 @@ function logMealFromBuilder() {
 }
 
 // ── AI FOOD SEARCH ────────────────────────────────────────────────
-async function searchFoodForBuilder() {
-  const input = document.getElementById('builder-search');
-  const resultDiv = document.getElementById('builder-result');
-  const query = input?.value?.trim();
-  if (!query) return;
-
-  resultDiv.innerHTML = `<div style="font-size:13px;color:var(--mid);padding:10px 0;">Looking up "${query}"…</div>`;
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        system: `You are a precise nutrition database. The user will describe a food or ingredient with quantity. Return ONLY a JSON object with these exact keys: name (string, descriptive), kcal (number), protein (number, grams), carbs (number, grams), fat (number, grams). No text, no markdown, no explanation. Just the JSON object. Round all numbers to nearest integer. If the quantity is unclear, assume a standard serving.`,
-        messages: [{ role: 'user', content: query }]
-      })
-    });
-    const data = await response.json();
-    const text = data.content?.[0]?.text || '';
-    const clean = text.replace(/```json|```/g, '').trim();
-    const food = JSON.parse(clean);
-
-    resultDiv.innerHTML = `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:15px;font-weight:600;color:var(--ink);">${food.name}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--accent);">${food.kcal} kcal</div>
-        </div>
-        <div style="display:flex;gap:12px;font-size:13px;margin-bottom:14px;">
-          <span style="color:var(--teal);">P ${food.protein}g</span>
-          <span style="color:var(--amber);">C ${food.carbs}g</span>
-          <span style="color:var(--purple);">F ${food.fat}g</span>
-        </div>
-        <button onclick="addIngredientToBuilder(${JSON.stringify(food).replace(/"/g,'&quot;')})"
-          style="width:100%;padding:12px;background:var(--accent);color:#0a0a08;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">
-          + Add to meal
-        </button>
-      </div>`;
-  } catch(e) {
-    resultDiv.innerHTML = `<div style="font-size:13px;color:var(--red);padding:10px 0;">Lookup failed — check connection and try again.</div>`;
+async function searchFoodForBuilder(){
+  const input=document.getElementById('builder-search');
+  const rd=document.getElementById('builder-result');
+  const q=input&&input.value.trim();
+  if(!q)return;
+  const local=searchFoodDB(q);
+  if(local.length>0){
+    rd.innerHTML=local.map(f=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;"><div style="font-size:14px;font-weight:500;color:var(--ink);">${f.name}</div>
+        <div style="font-size:12px;color:var(--mid);">${f.kcal} kcal · P ${f.protein}g · C ${f.carbs}g · F ${f.fat}g</div></div>
+        <button onclick="addIngredientToBuilder(${JSON.stringify(f).replace(/"/g,'&quot;')})"
+          style="padding:7px 12px;background:var(--accent);color:#0a0a08;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">+</button>
+      </div>`).join('')+`<button onclick="searchBuilderAI()"
+        style="width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border2);border-radius:10px;color:var(--mid);font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:8px;">
+        Not listed? AI lookup →</button>`;
+    return;
   }
+  searchBuilderAI();
+}
+async function searchBuilderAI(){
+  const input=document.getElementById('builder-search');
+  const rd=document.getElementById('builder-result');
+  const q=input&&input.value.trim();
+  if(!q)return;
+  const key=localStorage.getItem('atlas_api_key');
+  if(!key){rd.innerHTML=apiKeyPrompt('searchBuilderAI()');return;}
+  rd.innerHTML='<div style="font-size:13px;color:var(--mid);padding:8px 0;">Looking up…</div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:150,
+        system:'Return ONLY JSON: {"name":"...","kcal":0,"protein":0,"carbs":0,"fat":0}. No markdown.',
+        messages:[{role:'user',content:q}]})
+    });
+    const d=await r.json();
+    if(d.error)throw new Error(d.error.message);
+    const food=JSON.parse((d.content[0].text||'').replace(/```json|```/g,'').trim());
+    rd.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:13px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:14px;font-weight:600;color:var(--ink);">${food.name}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--accent);">${food.kcal} kcal</div>
+      </div>
+      <div style="font-size:12px;color:var(--mid);margin-bottom:11px;">P ${food.protein}g · C ${food.carbs}g · F ${food.fat}g</div>
+      <button onclick="addIngredientToBuilder(${JSON.stringify(food).replace(/"/g,'&quot;')})"
+        style="width:100%;padding:11px;background:var(--accent);color:#0a0a08;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">+ Add to meal</button>
+    </div>`;
+  }catch(e){rd.innerHTML=`<div style="font-size:13px;color:var(--red);padding:8px 0;">Failed: ${e.message||'check API key'}</div>`;}
 }
 
 function addIngredientToBuilder(food) {
@@ -3596,507 +3602,125 @@ async function openFoodSearch(dayKey, slot) {
   document.body.appendChild(overlay);
 }
 
-async function doFoodSearch(dayKey, slot, overlayEl) {
-  const input = document.getElementById('food-search-input');
-  const resultDiv = document.getElementById('food-search-result');
-  const query = input?.value?.trim();
-  if (!query) return;
 
-  resultDiv.innerHTML = `<div style="font-size:13px;color:var(--mid);padding:8px 0;">Looking up "${query}"…</div>`;
+const FOOD_DB=[
+{name:"Chicken breast 100g",kcal:165,protein:31,carbs:0,fat:4,tags:"chicken protein meat"},
+{name:"Chicken breast 150g",kcal:248,protein:46,carbs:0,fat:5,tags:"chicken protein meat"},
+{name:"Salmon 150g",kcal:280,protein:40,carbs:0,fat:13,tags:"salmon fish protein"},
+{name:"Tuna in water 100g",kcal:116,protein:26,carbs:0,fat:1,tags:"tuna fish protein"},
+{name:"Egg whole",kcal:78,protein:6,carbs:1,fat:5,tags:"egg protein"},
+{name:"Eggs x2",kcal:156,protein:13,carbs:1,fat:11,tags:"eggs protein"},
+{name:"Egg whites 100g",kcal:52,protein:11,carbs:1,fat:0,tags:"egg white protein"},
+{name:"Whey protein 30g",kcal:120,protein:24,carbs:3,fat:2,tags:"whey protein shake supplement"},
+{name:"Greek yogurt 200g",kcal:118,protein:20,carbs:8,fat:1,tags:"yogurt greek protein dairy"},
+{name:"Cottage cheese 100g",kcal:98,protein:11,carbs:3,fat:4,tags:"cottage cheese protein dairy"},
+{name:"Turkey breast 150g",kcal:195,protein:44,carbs:0,fat:2,tags:"turkey protein meat"},
+{name:"Tofu firm 150g",kcal:120,protein:14,carbs:3,fat:6,tags:"tofu protein vegan"},
+{name:"Collagen powder 10g",kcal:38,protein:9,carbs:0,fat:0,tags:"collagen protein supplement"},
+{name:"Creatine 5g",kcal:0,protein:0,carbs:0,fat:0,tags:"creatine supplement"},
+{name:"Inulin 5g",kcal:12,protein:0,carbs:3,fat:0,tags:"inulin fibre supplement"},
+{name:"White rice 150g cooked",kcal:195,protein:4,carbs:43,fat:0,tags:"rice carbs"},
+{name:"White rice 200g cooked",kcal:260,protein:5,carbs:57,fat:1,tags:"rice carbs"},
+{name:"Brown rice 150g cooked",kcal:165,protein:4,carbs:34,fat:1,tags:"rice brown carbs"},
+{name:"Oats 50g dry",kcal:190,protein:7,carbs:32,fat:4,tags:"oats oatmeal carbs breakfast"},
+{name:"Oats 80g dry",kcal:304,protein:11,carbs:51,fat:6,tags:"oats oatmeal carbs breakfast"},
+{name:"Sweet potato 150g",kcal:129,protein:2,carbs:30,fat:0,tags:"sweet potato carbs"},
+{name:"Sweet potato 200g",kcal:172,protein:3,carbs:40,fat:0,tags:"sweet potato carbs"},
+{name:"Banana medium",kcal:89,protein:1,carbs:23,fat:0,tags:"banana fruit carbs"},
+{name:"Banana large",kcal:121,protein:1,carbs:31,fat:0,tags:"banana fruit carbs"},
+{name:"Mixed red berries 80g",kcal:40,protein:1,carbs:9,fat:0,tags:"berries strawberry raspberry fruit"},
+{name:"Blueberries 80g",kcal:46,protein:1,carbs:11,fat:0,tags:"blueberries fruit berries"},
+{name:"Apple medium",kcal:95,protein:0,carbs:25,fat:0,tags:"apple fruit"},
+{name:"Pasta 80g dry",kcal:288,protein:10,carbs:57,fat:1,tags:"pasta carbs"},
+{name:"Bread slice wholemeal",kcal:80,protein:4,carbs:14,fat:1,tags:"bread carbs"},
+{name:"Quinoa 100g cooked",kcal:120,protein:4,carbs:21,fat:2,tags:"quinoa carbs protein"},
+{name:"Avocado half",kcal:120,protein:1,carbs:6,fat:11,tags:"avocado fat"},
+{name:"Almonds 30g",kcal:173,protein:6,carbs:6,fat:15,tags:"almonds nuts fat"},
+{name:"Peanut butter 30g",kcal:188,protein:8,carbs:6,fat:16,tags:"peanut butter fat nuts"},
+{name:"Olive oil 1 tbsp",kcal:119,protein:0,carbs:0,fat:14,tags:"olive oil fat"},
+{name:"Whole milk 250ml",kcal:150,protein:8,carbs:12,fat:8,tags:"milk dairy"},
+{name:"Oat milk 250ml",kcal:113,protein:3,carbs:16,fat:3,tags:"oat milk dairy free"},
+{name:"Flat white cow milk",kcal:120,protein:6,carbs:9,fat:5,tags:"coffee flat white drink"},
+{name:"Flat white oat milk",kcal:110,protein:4,carbs:13,fat:4,tags:"coffee flat white oat drink"},
+{name:"Americano black",kcal:5,protein:0,carbs:1,fat:0,tags:"coffee americano drink"},
+{name:"Protein shake water",kcal:150,protein:30,carbs:5,fat:2,tags:"protein shake whey supplement"},
+{name:"Protein shake milk",kcal:280,protein:34,carbs:22,fat:6,tags:"protein shake whey milk"},
+{name:"Morning shake (Harold)",kcal:480,protein:42,carbs:52,fat:8,tags:"shake breakfast harold custom oats banana berries whey collagen"},
+{name:"Beef mince lean 150g",kcal:250,protein:38,carbs:0,fat:11,tags:"beef mince protein meat"},
+];
+function searchFoodDB(q){
+  const words=q.toLowerCase().trim().split(/\s+/);
+  return FOOD_DB.filter(f=>{
+    const h=(f.name+' '+f.tags).toLowerCase();
+    return words.some(w=>h.includes(w));
+  }).slice(0,6);
+}
+function saveAPIKey(){
+  const el=document.getElementById('api-key-input');
+  const k=el&&el.value.trim();
+  if(k&&k.startsWith('sk-ant-'))localStorage.setItem('atlas_api_key',k);
+}
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        system: `You are a precise nutrition database. The user will describe a food or ingredient with quantity. Return ONLY a JSON object with these exact keys: name (string, descriptive), kcal (number), protein (number, grams), carbs (number, grams), fat (number, grams). No text, no markdown, no explanation. Just the JSON object. Round all numbers to nearest integer.`,
-        messages: [{ role: 'user', content: query }]
-      })
+async function doFoodSearch(dayKey,slot){
+  const input=document.getElementById('food-search-input');
+  const rd=document.getElementById('food-search-result');
+  const q=input&&input.value.trim();
+  if(!q)return;
+  const local=searchFoodDB(q);
+  if(local.length>0){
+    rd.innerHTML=local.map(f=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;"><div style="font-size:14px;font-weight:500;color:var(--ink);">${f.name}</div>
+        <div style="font-size:12px;color:var(--mid);">${f.kcal} kcal · P ${f.protein}g · C ${f.carbs}g · F ${f.fat}g</div></div>
+        <button onclick="addToMealSlot('${dayKey}','${slot}',${JSON.stringify(f).replace(/"/g,'&quot;')});document.querySelectorAll('div[style*=inset]').forEach(e=>e.remove());"
+          style="padding:7px 12px;background:var(--accent);color:#0a0a08;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">+</button>
+      </div>`).join('')+`<button onclick="doFoodSearchAI('${dayKey}','${slot}')"
+        style="width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border2);border-radius:10px;color:var(--mid);font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:8px;">
+        Not listed? AI lookup →</button>`;
+    return;
+  }
+  doFoodSearchAI(dayKey,slot);
+}
+async function doFoodSearchAI(dayKey,slot){
+  const input=document.getElementById('food-search-input');
+  const rd=document.getElementById('food-search-result');
+  const q=input&&input.value.trim();
+  if(!q)return;
+  const key=localStorage.getItem('atlas_api_key');
+  if(!key){rd.innerHTML=apiKeyPrompt(`doFoodSearchAI('${dayKey}','${slot}')`);return;}
+  rd.innerHTML='<div style="font-size:13px;color:var(--mid);padding:8px 0;">Looking up…</div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:150,
+        system:'Return ONLY JSON: {"name":"...","kcal":0,"protein":0,"carbs":0,"fat":0}. No markdown.',
+        messages:[{role:'user',content:q}]})
     });
-    const data = await response.json();
-    const text = data.content?.[0]?.text || '';
-    const clean = text.replace(/```json|```/g, '').trim();
-    const food = JSON.parse(clean);
-
-    resultDiv.innerHTML = `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div style="font-size:15px;font-weight:600;color:var(--ink);">${food.name}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--accent);">${food.kcal} kcal</div>
-        </div>
-        <div style="display:flex;gap:12px;font-size:13px;margin-bottom:12px;">
-          <span style="color:var(--teal);">P ${food.protein}g</span>
-          <span style="color:var(--amber);">C ${food.carbs}g</span>
-          <span style="color:var(--purple);">F ${food.fat}g</span>
-        </div>
-        <button onclick="addToMealSlot('${dayKey}','${slot}',${JSON.stringify(food).replace(/"/g,'&quot;')});document.querySelectorAll('div[style*=inset]').forEach(e=>e.remove());"
-          style="width:100%;padding:12px;background:var(--accent);color:#0a0a08;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">
-          + Add to ${MEAL_SLOTS.find(s=>s.id===slot)?.label || slot}
-        </button>
-      </div>`;
-  } catch(e) {
-    resultDiv.innerHTML = `<div style="font-size:13px;color:var(--red);padding:8px 0;">Lookup failed — try again.</div>`;
-  }
-}
-
-// ── ONBOARDING ────────────────────────────────────────────────────
-const ONB_STEPS = ['goal','sex','age','weight','height','activity','done'];
-let onbData = {};
-let onbStep = 0;
-
-function startOnboarding() {
-  onbData = {};
-  onbStep = 0;
-  document.getElementById('nutrition-main').classList.add('hidden');
-  document.getElementById('nutrition-onboarding').classList.remove('hidden');
-  renderOnbStep();
-}
-
-function renderOnbStep() {
-  const step = ONB_STEPS[onbStep];
-  const el = document.getElementById('onboarding-step');
-  const progressHTML = `<div style="display:flex;gap:5px;margin-bottom:28px;">${ONB_STEPS.slice(0,-1).map((_,i)=>`<div style="flex:1;height:2px;border-radius:2px;background:${i<=onbStep?'var(--accent)':'var(--border)'};transition:background 0.3s;"></div>`).join('')}</div>`;
-
-  if (step === 'goal') {
-    el.innerHTML = `${progressHTML}
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">Let's build your nutrition plan</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:24px;">Your Goal</div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        ${[['loss','Fat Loss','Reduce body fat'],['recomp','Recomposition','Lose fat, gain muscle'],['perf','Performance','Fuel training output'],['gain','Muscle Gain','Build size and strength']].map(([val,label,sub])=>`
-          <button onclick="onbSelect('goal','${val}')" class="onb-option ${onbData.goal===val?'selected':''}">
-            <div class="onb-option-num">${{loss:'1',recomp:'2',perf:'3',gain:'4'}[val]}</div>
-            <div><div class="onb-option-label">${label}</div><div style="font-size:13px;color:var(--mid);margin-top:2px;">${sub}</div></div>
-            ${onbData.goal===val?`<span style="margin-left:auto;color:var(--accent);font-size:18px;">✓</span>`:''}
-          </button>`).join('')}
+    const d=await r.json();
+    if(d.error)throw new Error(d.error.message);
+    const food=JSON.parse((d.content[0].text||'').replace(/```json|```/g,'').trim());
+    rd.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:13px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:14px;font-weight:600;color:var(--ink);">${food.name}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--accent);">${food.kcal} kcal</div>
       </div>
-      ${onbData.goal?`<button onclick="onbNext()" class="btn-primary" style="margin-top:20px;">Continue →</button>`:''}`;
-  } else if (step === 'sex') {
-    el.innerHTML = `${progressHTML}
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:24px;">Biological Sex</div>
-      <div style="display:flex;gap:12px;">
-        ${[['male','Male'],['female','Female']].map(([val,label])=>`
-          <button onclick="onbSelect('sex','${val}')" style="flex:1;padding:24px 16px;background:${onbData.sex===val?'var(--accent-light)':'var(--card)'};border:1.5px solid ${onbData.sex===val?'var(--accent)':'var(--border)'};border-radius:16px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:center;transition:all 0.15s;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;color:${onbData.sex===val?'var(--accent)':'var(--ink)'};margin-bottom:4px;">${val==='male'?'M':'F'}</div>
-            <div style="font-size:15px;font-weight:600;color:var(--ink);">${label}</div>
-          </button>`).join('')}
-      </div>
-      ${onbData.sex?`<button onclick="onbNext()" class="btn-primary" style="margin-top:20px;">Continue →</button>`:''}`;
-  } else if (['age','weight','height'].includes(step)) {
-    const config = { age:{label:'Age',unit:'years',ph:'e.g. 35'}, weight:{label:'Weight',unit:'kg',ph:'e.g. 82'}, height:{label:'Height',unit:'cm',ph:'e.g. 178'} };
-    const c = config[step];
-    el.innerHTML = `${progressHTML}
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:24px;">${c.label}</div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <input type="number" id="onb-input" placeholder="${c.ph}" value="${onbData[step]||''}"
-          style="flex:1;padding:18px;font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;background:var(--card);border:1.5px solid var(--border2);border-radius:14px;color:var(--ink);text-align:center;outline:none;"
-          oninput="onbData.${step}=this.value">
-        <span style="font-size:16px;font-weight:600;color:var(--mid);min-width:40px;">${c.unit}</span>
-      </div>
-      <button onclick="if(onbData.${step}>0)onbNext()" class="btn-primary">Continue →</button>`;
-    setTimeout(()=>document.getElementById('onb-input')?.focus(),100);
-  } else if (step === 'activity') {
-    el.innerHTML = `${progressHTML}
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:24px;">Activity Level</div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        ${[['low','Lightly active','1–2 sessions per week'],['mod','Moderately active','3–4 sessions per week'],['high','Very active','5–6 sessions per week'],['elite','Athlete','Daily training']].map(([val,label,sub])=>`
-          <button onclick="onbSelect('activity','${val}')" class="onb-option ${onbData.activity===val?'selected':''}">
-            <div class="onb-option-num">${{low:'1',mod:'2',high:'3',elite:'4'}[val]}</div>
-            <div><div class="onb-option-label">${label}</div><div style="font-size:13px;color:var(--mid);margin-top:2px;">${sub}</div></div>
-            ${onbData.activity===val?`<span style="margin-left:auto;color:var(--accent);font-size:18px;">✓</span>`:''}
-          </button>`).join('')}
-      </div>
-      ${onbData.activity?`<button onclick="onbNext()" class="btn-primary" style="margin-top:20px;">Build my plan →</button>`:''}`;
-  } else if (step === 'done') {
-    const ns = getNS();
-    ns.profile = { goal:onbData.goal, sex:onbData.sex, age:Number(onbData.age), weight:Number(onbData.weight), height:Number(onbData.height), activity:onbData.activity };
-    ns.macros = calcMacros(ns.profile);
-    saveNS(ns);
-    const m = ns.macros;
-    el.innerHTML = `
-      <div style="text-align:center;padding:20px 0;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Plan Ready</div>
-        <div style="font-size:14px;color:var(--mid);margin-bottom:28px;">Based on your profile. Adjustable any time in settings.</div>
-        ${m?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;">
-          ${[{dt:'Training',color:'var(--accent)',data:m.training},{dt:'Rest',color:'var(--blue)',data:m.rest}].map(d=>`
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;">
-            <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;color:var(--subtle);text-transform:uppercase;margin-bottom:8px;">${d.dt}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:700;color:${d.color};line-height:1;">${d.data.kcal}</div>
-            <div style="font-size:11px;color:var(--subtle);margin-bottom:10px;">kcal</div>
-            <div style="font-size:13px;color:var(--ink2);line-height:1.9;">P: ${d.data.protein}g<br>C: ${d.data.carbs}g<br>F: ${d.data.fat}g</div>
-          </div>`).join('')}
-        </div>`:''}
-        <button onclick="finishOnboarding()" class="btn-primary">Start tracking →</button>
-      </div>`;
-  }
-}
-
-function onbSelect(key, val) { onbData[key]=val; renderOnbStep(); }
-function onbNext() { onbStep++; renderOnbStep(); }
-function finishOnboarding() {
-  document.getElementById('nutrition-onboarding').classList.add('hidden');
-  document.getElementById('nutrition-main').classList.remove('hidden');
-  renderNutrition();
-}
-
-// ── SETTINGS ──────────────────────────────────────────────────────
-function openNutritionSettings() {
-  const ns = getNS();
-  const p = ns.profile || {};
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:flex;align-items:flex-end;backdrop-filter:blur(6px);';
-  overlay.innerHTML = `
-    <div style="background:var(--card);border-radius:22px 22px 0 0;padding:22px 18px calc(var(--safe-bottom)+22px);width:100%;max-width:520px;margin:0 auto;max-height:85vh;overflow-y:auto;">
-      <div style="width:34px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 18px;"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;">Settings</div>
-        <button onclick="this.closest('div[style*=fixed]').remove()" style="width:32px;height:32px;border-radius:9px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:16px;">✕</button>
-      </div>
-      <!-- Language -->
-      <div style="margin-bottom:18px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Language</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          ${[['en','EN'],['fr','FR'],['es','ES'],['de','DE']].map(([code,label])=>`
-            <button onclick="setLang('${code}')" style="padding:9px 16px;border-radius:99px;border:1.5px solid ${currentLang===code?'var(--accent)':'var(--border)'};background:${currentLang===code?'var(--accent-light)':'var(--card2)'};color:${currentLang===code?'var(--accent)':'var(--mid)'};font-size:13px;font-weight:700;cursor:pointer;">${label}</button>`).join('')}
-        </div>
-      </div>
-      <!-- Profile -->
-      <div style="margin-bottom:18px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Profile</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          ${[['weight','Weight (kg)',p.weight],['height','Height (cm)',p.height],['age','Age',p.age]].map(([id,label,val])=>`
-            <div>
-              <div style="font-size:11px;color:var(--mid);margin-bottom:4px;">${label}</div>
-              <input id="set-${id}" type="number" value="${val||''}" style="width:100%;padding:12px;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;color:var(--ink);font-size:16px;font-family:'Outfit',sans-serif;outline:none;">
-            </div>`).join('')}
-          <div>
-            <div style="font-size:11px;color:var(--mid);margin-bottom:4px;">Goal</div>
-            <select id="set-goal" style="width:100%;padding:12px;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;color:var(--ink);font-size:14px;font-family:'Outfit',sans-serif;outline:none;">
-              ${[['loss','Fat Loss'],['recomp','Recomposition'],['perf','Performance'],['gain','Muscle Gain']].map(([v,l])=>`<option value="${v}" ${p.goal===v?'selected':''}>${l}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-      </div>
-      <button onclick="saveNutritionSettings()" class="btn-primary" style="margin-bottom:10px;">Save changes</button>
-      <button onclick="startOnboarding();this.closest('div[style*=fixed]').remove();" style="width:100%;padding:13px;background:transparent;border:none;color:var(--subtle);font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;">Redo questionnaire</button>
+      <div style="font-size:12px;color:var(--mid);margin-bottom:11px;">P ${food.protein}g · C ${food.carbs}g · F ${food.fat}g</div>
+      <button onclick="addToMealSlot('${dayKey}','${slot}',${JSON.stringify(food).replace(/"/g,'&quot;')});document.querySelectorAll('div[style*=inset]').forEach(e=>e.remove());"
+        style="width:100%;padding:11px;background:var(--accent);color:#0a0a08;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">+ Add to meal</button>
     </div>`;
-  overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
-  document.body.appendChild(overlay);
+  }catch(e){rd.innerHTML=`<div style="font-size:13px;color:var(--red);padding:8px 0;">Failed: ${e.message||'check API key'}</div>`;}
+}
+function apiKeyPrompt(callbackFn){
+  return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;">
+    <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:5px;">AI lookup requires an API key</div>
+    <div style="font-size:12px;color:var(--mid);margin-bottom:10px;">Stored only on this device. Free keys at console.anthropic.com</div>
+    <input id="api-key-input" placeholder="sk-ant-api03-..."
+      style="width:100%;padding:10px;background:var(--card2);border:1.5px solid var(--border2);border-radius:9px;color:var(--ink);font-size:13px;font-family:'Outfit',sans-serif;outline:none;margin-bottom:9px;">
+    <button onclick="saveAPIKey();${callbackFn}"
+      style="width:100%;padding:11px;background:var(--accent);color:#0a0a08;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">
+      Save & search
+    </button>
+  </div>`;
 }
 
-function saveNutritionSettings() {
-  const ns = getNS();
-  if (!ns.profile) ns.profile = {};
-  ns.profile.weight = Number(document.getElementById('set-weight')?.value) || ns.profile.weight;
-  ns.profile.height = Number(document.getElementById('set-height')?.value) || ns.profile.height;
-  ns.profile.age    = Number(document.getElementById('set-age')?.value)    || ns.profile.age;
-  ns.profile.goal   = document.getElementById('set-goal')?.value           || ns.profile.goal;
-  ns.macros = calcMacros(ns.profile);
-  saveNS(ns);
-  document.querySelector('div[style*="inset:0"]')?.remove();
-  renderNutrition();
-}
-
-function clearNutritionLog() {
-  const ns = getNS();
-  ns.log[todayKey()] = { breakfast:[], lunch:[], dinner:[], snacks:[], pre:[], post:[] };
-  saveNS(ns);
-  renderNutrition();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SETTINGS SYSTEM
-// ═══════════════════════════════════════════════════════════════
-
-function getProfile() {
-  return JSON.parse(localStorage.getItem('atlas_profile') || '{}');
-}
-function saveProfile(p) {
-  localStorage.setItem('atlas_profile', JSON.stringify(p));
-  updateAvatar();
-}
-
-function updateAvatar() {
-  const p = getProfile();
-  const avatar = document.getElementById('profile-avatar');
-  if (!avatar) return;
-  const name = p.name || 'You';
-  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-  avatar.textContent = initials;
-}
-
-function openSettings() {
-  const p = getProfile();
-  const ns = JSON.parse(localStorage.getItem('atlas_nutrition') || '{}');
-  const macros = ns.macros;
-  const profile = ns.profile || {};
-
-  const EQUIPMENT = [
-    'Pull-up bar','Rings','Parallettes','Resistance bands',
-    'Kettlebells','Dumbbells','Barbell','Box','Jump rope','Foam roller'
-  ];
-  const INJURIES = [
-    'Right knee','Left knee','Right elbow','Left elbow',
-    'Right shoulder','Left shoulder','Lower back','Wrist'
-  ];
-  const FOCUS_SKILLS = [
-    'Ring Muscle-Up','Handstand','Handstand Walk',
-    'Butterfly Pull-Up','Planche','Front Lever','Back Lever'
-  ];
-  const LANGS = [['en','English'],['fr','Français'],['es','Español'],['de','Deutsch']];
-
-  const eq = p.equipment || [];
-  const inj = p.injuries || [];
-  const skills = p.focusSkills || [];
-
-  const overlay = document.createElement('div');
-  overlay.id = 'settings-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
-
-  overlay.innerHTML = `
-    <div class="settings-sheet">
-      <div class="settings-handle"></div>
-
-      <!-- Profile header -->
-      <div style="padding:20px 20px 0;display:flex;align-items:center;gap:16px;margin-bottom:6px;">
-        <div style="width:64px;height:64px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;
-          font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#0a0a08;flex-shrink:0;">
-          ${(p.name||'You').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
-        </div>
-        <div style="flex:1;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--ink);letter-spacing:0.02em;text-transform:uppercase;line-height:1;">${p.name||'Your Profile'}</div>
-          <div style="font-size:13px;color:var(--mid);margin-top:3px;">${profile.goal ? ({loss:'Fat Loss',recomp:'Recomposition',perf:'Performance',gain:'Muscle Gain'}[profile.goal]||'') : 'Set your goal →'}</div>
-        </div>
-        <button onclick="document.getElementById('settings-overlay').remove()"
-          style="width:34px;height:34px;border-radius:10px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
-      </div>
-
-      <!-- ── PERSONAL ── -->
-      <div class="settings-section" style="margin-top:20px;">
-        <div class="settings-section-label">Personal</div>
-        <input class="settings-input" id="s-name" placeholder="Your name" value="${p.name||''}">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
-          <div>
-            <div style="font-size:11px;color:var(--mid);margin-bottom:4px;">Age</div>
-            <input class="settings-input" id="s-age" type="number" placeholder="35" value="${profile.age||p.age||''}" style="margin-bottom:0;">
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--mid);margin-bottom:4px;">Weight (kg)</div>
-            <input class="settings-input" id="s-weight" type="number" placeholder="80" value="${profile.weight||p.weight||''}" style="margin-bottom:0;">
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--mid);margin-bottom:4px;">Height (cm)</div>
-            <input class="settings-input" id="s-height" type="number" placeholder="180" value="${profile.height||p.height||''}" style="margin-bottom:0;">
-          </div>
-        </div>
-      </div>
-
-      <!-- ── TRAINING GOAL ── -->
-      <div class="settings-section">
-        <div class="settings-section-label">Training Goal</div>
-        <div style="display:flex;flex-direction:column;gap:7px;">
-          ${[['loss','Fat Loss','Reduce body fat'],['recomp','Recomposition','Lose fat, gain muscle'],['perf','Performance','Fuel athletic output'],['gain','Muscle Gain','Build size and strength']].map(([val,label,sub])=>`
-            <button onclick="setGoalPref('${val}',this)" data-goal="${val}"
-              style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:${(p.goal||profile.goal)===val?'var(--accent-light)':'var(--card)'};border:1.5px solid ${(p.goal||profile.goal)===val?'var(--accent)':'var(--border)'};border-radius:12px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left;transition:all 0.15s;width:100%;">
-              <div style="width:28px;height:28px;border-radius:8px;background:${(p.goal||profile.goal)===val?'var(--accent)':'var(--card2)'};border:1px solid ${(p.goal||profile.goal)===val?'var(--accent)':'var(--border2)'};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;color:${(p.goal||profile.goal)===val?'#0a0a08':'var(--subtle)'};flex-shrink:0;">
-                ${(p.goal||profile.goal)===val?'✓':{loss:'1',recomp:'2',perf:'3',gain:'4'}[val]}
-              </div>
-              <div><div style="font-size:14px;font-weight:600;color:var(--ink);">${label}</div><div style="font-size:12px;color:var(--mid);margin-top:1px;">${sub}</div></div>
-            </button>`).join('')}
-        </div>
-      </div>
-
-      <!-- ── FOCUS SKILLS ── -->
-      <div class="settings-section" style="margin-top:16px;">
-        <div class="settings-section-label">Focus Skills</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          ${FOCUS_SKILLS.map(s=>`
-            <button onclick="toggleChip(this,'focusSkills','${s}')" data-key="focusSkills" data-val="${s}"
-              class="equip-chip ${skills.includes(s)?'on':''}">${s}</button>`).join('')}
-        </div>
-      </div>
-
-      <!-- ── EQUIPMENT ── -->
-      <div class="settings-section" style="margin-top:16px;">
-        <div class="settings-section-label">Equipment Available</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          ${EQUIPMENT.map(e=>`
-            <button onclick="toggleChip(this,'equipment','${e}')" data-key="equipment" data-val="${e}"
-              class="equip-chip ${eq.includes(e)?'on':''}">${e}</button>`).join('')}
-        </div>
-      </div>
-
-      <!-- ── INJURIES ── -->
-      <div class="settings-section" style="margin-top:16px;">
-        <div class="settings-section-label">Active Injuries / Areas to protect</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          ${INJURIES.map(i=>`
-            <button onclick="toggleChip(this,'injuries','${i}')" data-key="injuries" data-val="${i}"
-              class="injury-chip ${inj.includes(i)?'on':''}">${i}</button>`).join('')}
-        </div>
-      </div>
-
-      <!-- ── NUTRITION ── -->
-      <div class="settings-section" style="margin-top:16px;">
-        <div class="settings-section-label">Nutrition Targets</div>
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;">
-          ${macros ? `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-              ${[{dt:'Training',color:'var(--accent)',data:macros.training},{dt:'Rest',color:'var(--blue)',data:macros.rest}].map(d=>`
-                <div>
-                  <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--subtle);margin-bottom:5px;">${d.dt}</div>
-                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:${d.color};">${d.data.kcal}<span style="font-size:12px;color:var(--subtle);"> kcal</span></div>
-                  <div style="font-size:12px;color:var(--mid);margin-top:3px;">P ${d.data.protein}g · C ${d.data.carbs}g · F ${d.data.fat}g</div>
-                </div>`).join('')}
-            </div>` : '<div style="font-size:13px;color:var(--subtle);">Not set up yet.</div>'}
-          <button onclick="document.getElementById('settings-overlay').remove();showTab('nutrition');openNutritionSettings();"
-            style="width:100%;padding:11px;background:var(--card2);border:1.5px solid var(--border2);border-radius:10px;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;">
-            Edit nutrition profile →
-          </button>
-        </div>
-      </div>
-
-      <!-- ── LANGUAGE ── -->
-      <div class="settings-section" style="margin-top:16px;">
-        <div class="settings-section-label">Language</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          ${LANGS.map(([code,label])=>`
-            <button onclick="setLang('${code}');updateLangButtons()"
-              id="lang-btn-${code}"
-              style="padding:10px 18px;border-radius:99px;border:1.5px solid ${currentLang===code?'var(--accent)':'var(--border2)'};background:${currentLang===code?'var(--accent-light)':'var(--card2)'};color:${currentLang===code?'var(--accent)':'var(--mid)'};font-size:14px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;">${label}</button>`).join('')}
-        </div>
-      </div>
-
-      <!-- ── SAVE ── -->
-      <div style="padding:20px;">
-        <button onclick="saveSettingsAndClose()"
-          style="width:100%;padding:17px;background:linear-gradient(135deg,var(--accent),var(--accent)cc);color:#0a0a08;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 18px var(--accent-glow);">
-          Save
-        </button>
-      </div>
-    </div>`;
-
-  overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
-  document.body.appendChild(overlay);
-}
-
-// Track goal selection
-let _pendingGoal = null;
-function setGoalPref(val, btn) {
-  _pendingGoal = val;
-  // Update UI
-  btn.closest('div').querySelectorAll('button[data-goal]').forEach(b => {
-    const isThis = b.dataset.goal === val;
-    b.style.background = isThis ? 'var(--accent-light)' : 'var(--card)';
-    b.style.borderColor = isThis ? 'var(--accent)' : 'var(--border)';
-    const numEl = b.querySelector('div:first-child');
-    if (numEl) {
-      numEl.style.background = isThis ? 'var(--accent)' : 'var(--card2)';
-      numEl.style.color = isThis ? '#0a0a08' : 'var(--subtle)';
-      numEl.style.borderColor = isThis ? 'var(--accent)' : 'var(--border2)';
-      numEl.textContent = isThis ? '✓' : {loss:'1',recomp:'2',perf:'3',gain:'4'}[b.dataset.goal];
-    }
-  });
-}
-
-function toggleChip(btn, key, val) {
-  btn.classList.toggle('on');
-  // Persist immediately
-  const p = getProfile();
-  if (!p[key]) p[key] = [];
-  if (p[key].includes(val)) {
-    p[key] = p[key].filter(v => v !== val);
-  } else {
-    p[key].push(val);
-  }
-  saveProfile(p);
-}
-
-function updateLangButtons() {
-  ['en','fr','es','de'].forEach(code => {
-    const btn = document.getElementById('lang-btn-' + code);
-    if (!btn) return;
-    const isActive = currentLang === code;
-    btn.style.borderColor = isActive ? 'var(--accent)' : 'var(--border2)';
-    btn.style.background  = isActive ? 'var(--accent-light)' : 'var(--card2)';
-    btn.style.color       = isActive ? 'var(--accent)' : 'var(--mid)';
-  });
-}
-
-function saveSettingsAndClose() {
-  const p = getProfile();
-  const name   = document.getElementById('s-name')?.value?.trim();
-  const age    = Number(document.getElementById('s-age')?.value);
-  const weight = Number(document.getElementById('s-weight')?.value);
-  const height = Number(document.getElementById('s-height')?.value);
-
-  if (name)   p.name   = name;
-  if (age)    p.age    = age;
-  if (weight) p.weight = weight;
-  if (height) p.height = height;
-  if (_pendingGoal) p.goal = _pendingGoal;
-  _pendingGoal = null;
-
-  saveProfile(p);
-
-  // Also sync to nutrition profile if it exists
-  const ns = JSON.parse(localStorage.getItem('atlas_nutrition') || '{}');
-  if (ns.profile) {
-    if (age)    ns.profile.age    = age;
-    if (weight) ns.profile.weight = weight;
-    if (height) ns.profile.height = height;
-    if (p.goal) ns.profile.goal   = p.goal;
-    // Recalculate macros
-    if (typeof calcMacros === 'function') ns.macros = calcMacros(ns.profile);
-    localStorage.setItem('atlas_nutrition', JSON.stringify(ns));
-  }
-
-  document.getElementById('settings-overlay')?.remove();
-}
-
-function injectScreenHeaders() {
-  ['today','train','skills','rehab','log','nutrition'].forEach(id => {
-    const el = document.getElementById('screen-header-' + id);
-    if (el) el.innerHTML = renderScreenHeader(id);
-  });
-}
-
-function injectSVGIcons() {
- // Back buttons
- document.querySelectorAll('.back-svg-btn').forEach(btn => {
- btn.innerHTML = ICONS.back;
- });
- // Settings button
- const settingsBtn = document.getElementById('nutrition-settings-btn');
- if (settingsBtn) settingsBtn.innerHTML = ICONS.settings;
- // Trophy icon
- const trophy = document.getElementById('complete-trophy-icon');
- if (trophy) trophy.innerHTML = ICONS.trophy;
-}
-
-function injectTabIcons() {
- const map = {
- 'tab-icon-today': ICONS.today,
- 'tab-icon-train': ICONS.train,
- 'tab-icon-skills': ICONS.skills,
- 'tab-icon-rehab': ICONS.rehab,
- 'tab-icon-log': ICONS.log,
- 'tab-icon-nutrition': ICONS.nutrition,
- };
- Object.entries(map).forEach(([id, svg]) => {
- const el = document.getElementById(id);
- if (el) el.innerHTML = svg;
- });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
- init();
- applyLang();
- injectTabIcons();
- injectSVGIcons();
-});
-</script>
-
-</body>
-</html>
