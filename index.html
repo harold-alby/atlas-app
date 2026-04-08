@@ -320,6 +320,96 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 .ex-sets         { color: var(--mid); font-weight: 400; }
 .complete-sub    { color: var(--mid); font-weight: 400; }
 
+
+/* ── SETTINGS SHEET ──────────────────────────────────────────── */
+.settings-sheet {
+  background: var(--bg2);
+  border-radius: 24px 24px 0 0;
+  padding: 0;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.settings-handle {
+  width: 36px; height: 3px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 16px auto 0;
+}
+.settings-section {
+  padding: 20px 20px 0;
+}
+.settings-section-label {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--subtle); margin-bottom: 12px;
+}
+.settings-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.settings-row:active { opacity: 0.8; }
+.settings-row-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 16px;
+}
+.settings-row-label {
+  flex: 1;
+  font-size: 15px; font-weight: 500; color: var(--ink);
+}
+.settings-row-value {
+  font-size: 13px; color: var(--subtle); font-weight: 500;
+}
+.settings-row-chevron {
+  color: var(--subtle); flex-shrink: 0;
+}
+.settings-input {
+  width: 100%; padding: 13px 14px;
+  background: var(--card2);
+  border: 1.5px solid var(--border2);
+  border-radius: 11px;
+  color: var(--ink); font-size: 15px;
+  font-family: 'Outfit', sans-serif;
+  outline: none; margin-bottom: 10px;
+}
+.settings-input:focus { border-color: var(--accent); }
+.equip-chip {
+  padding: 8px 14px; border-radius: 99px;
+  border: 1.5px solid var(--border2);
+  background: var(--card2);
+  color: var(--mid); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+  font-family: 'Outfit', sans-serif;
+}
+.equip-chip.on {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.injury-chip {
+  padding: 8px 14px; border-radius: 99px;
+  border: 1.5px solid var(--border2);
+  background: var(--card2);
+  color: var(--mid); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+  font-family: 'Outfit', sans-serif;
+}
+.injury-chip.on {
+  border-color: var(--red);
+  background: rgba(248,113,113,0.1);
+  color: var(--red);
+}
+
 </style>
 </head>
 <body>
@@ -384,10 +474,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 <div id="screen-today" class="screen active">
 <div class="screen-inner">
   <div id="screen-header-today"></div>
- <div style="margin-bottom:28px;">
- <div class="eyebrow" id="today-date"></div>
- <div class="hero-title">Today's<br><span class="acc">Session</span></div>
- </div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;">
+    <div>
+      <div class="eyebrow" id="today-date"></div>
+      <div class="hero-title">Today's<br><span class="acc">Session</span></div>
+    </div>
+    <button onclick="openSettings()" id="profile-avatar"
+      style="width:44px;height:44px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:4px;
+      font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:#0a0a08;
+      letter-spacing:0.04em;box-shadow:0 2px 12px var(--accent-glow);">
+      HA
+    </button>
+  </div>
 
  <!-- Block 1: Warm-up -->
  <div class="today-block" id="block-warmup">
@@ -3704,6 +3803,256 @@ function clearNutritionLog() {
   ns.log[todayKey()] = { breakfast:[], lunch:[], dinner:[], snacks:[], pre:[], post:[] };
   saveNS(ns);
   renderNutrition();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+function getProfile() {
+  return JSON.parse(localStorage.getItem('atlas_profile') || '{}');
+}
+function saveProfile(p) {
+  localStorage.setItem('atlas_profile', JSON.stringify(p));
+  updateAvatar();
+}
+
+function updateAvatar() {
+  const p = getProfile();
+  const avatar = document.getElementById('profile-avatar');
+  if (!avatar) return;
+  const name = p.name || 'You';
+  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+  avatar.textContent = initials;
+}
+
+function openSettings() {
+  const p = getProfile();
+  const ns = JSON.parse(localStorage.getItem('atlas_nutrition') || '{}');
+  const macros = ns.macros;
+  const profile = ns.profile || {};
+
+  const EQUIPMENT = [
+    'Pull-up bar','Rings','Parallettes','Resistance bands',
+    'Kettlebells','Dumbbells','Barbell','Box','Jump rope','Foam roller'
+  ];
+  const INJURIES = [
+    'Right knee','Left knee','Right elbow','Left elbow',
+    'Right shoulder','Left shoulder','Lower back','Wrist'
+  ];
+  const FOCUS_SKILLS = [
+    'Ring Muscle-Up','Handstand','Handstand Walk',
+    'Butterfly Pull-Up','Planche','Front Lever','Back Lever'
+  ];
+  const LANGS = [['en','English'],['fr','Français'],['es','Español'],['de','Deutsch']];
+
+  const eq = p.equipment || [];
+  const inj = p.injuries || [];
+  const skills = p.focusSkills || [];
+
+  const overlay = document.createElement('div');
+  overlay.id = 'settings-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
+
+  overlay.innerHTML = `
+    <div class="settings-sheet">
+      <div class="settings-handle"></div>
+
+      <!-- Profile header -->
+      <div style="padding:20px 20px 0;display:flex;align-items:center;gap:16px;margin-bottom:6px;">
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;
+          font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#0a0a08;flex-shrink:0;">
+          ${(p.name||'You').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--ink);letter-spacing:0.02em;text-transform:uppercase;line-height:1;">${p.name||'Your Profile'}</div>
+          <div style="font-size:13px;color:var(--mid);margin-top:3px;">${profile.goal ? ({loss:'Fat Loss',recomp:'Recomposition',perf:'Performance',gain:'Muscle Gain'}[profile.goal]||'') : 'Set your goal →'}</div>
+        </div>
+        <button onclick="document.getElementById('settings-overlay').remove()"
+          style="width:34px;height:34px;border-radius:10px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+
+      <!-- ── PERSONAL ── -->
+      <div class="settings-section" style="margin-top:20px;">
+        <div class="settings-section-label">Personal</div>
+        <input class="settings-input" id="s-name" placeholder="Your name" value="${p.name||''}">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:11px;color:var(--mid);margin-bottom:4px;">Age</div>
+            <input class="settings-input" id="s-age" type="number" placeholder="35" value="${profile.age||p.age||''}" style="margin-bottom:0;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--mid);margin-bottom:4px;">Weight (kg)</div>
+            <input class="settings-input" id="s-weight" type="number" placeholder="80" value="${profile.weight||p.weight||''}" style="margin-bottom:0;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--mid);margin-bottom:4px;">Height (cm)</div>
+            <input class="settings-input" id="s-height" type="number" placeholder="180" value="${profile.height||p.height||''}" style="margin-bottom:0;">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TRAINING GOAL ── -->
+      <div class="settings-section">
+        <div class="settings-section-label">Training Goal</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          ${[['loss','Fat Loss','Reduce body fat'],['recomp','Recomposition','Lose fat, gain muscle'],['perf','Performance','Fuel athletic output'],['gain','Muscle Gain','Build size and strength']].map(([val,label,sub])=>`
+            <button onclick="setGoalPref('${val}',this)" data-goal="${val}"
+              style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:${(p.goal||profile.goal)===val?'var(--accent-light)':'var(--card)'};border:1.5px solid ${(p.goal||profile.goal)===val?'var(--accent)':'var(--border)'};border-radius:12px;cursor:pointer;font-family:'Outfit',sans-serif;text-align:left;transition:all 0.15s;width:100%;">
+              <div style="width:28px;height:28px;border-radius:8px;background:${(p.goal||profile.goal)===val?'var(--accent)':'var(--card2)'};border:1px solid ${(p.goal||profile.goal)===val?'var(--accent)':'var(--border2)'};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;color:${(p.goal||profile.goal)===val?'#0a0a08':'var(--subtle)'};flex-shrink:0;">
+                ${(p.goal||profile.goal)===val?'✓':{loss:'1',recomp:'2',perf:'3',gain:'4'}[val]}
+              </div>
+              <div><div style="font-size:14px;font-weight:600;color:var(--ink);">${label}</div><div style="font-size:12px;color:var(--mid);margin-top:1px;">${sub}</div></div>
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- ── FOCUS SKILLS ── -->
+      <div class="settings-section" style="margin-top:16px;">
+        <div class="settings-section-label">Focus Skills</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${FOCUS_SKILLS.map(s=>`
+            <button onclick="toggleChip(this,'focusSkills','${s}')" data-key="focusSkills" data-val="${s}"
+              class="equip-chip ${skills.includes(s)?'on':''}">${s}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- ── EQUIPMENT ── -->
+      <div class="settings-section" style="margin-top:16px;">
+        <div class="settings-section-label">Equipment Available</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${EQUIPMENT.map(e=>`
+            <button onclick="toggleChip(this,'equipment','${e}')" data-key="equipment" data-val="${e}"
+              class="equip-chip ${eq.includes(e)?'on':''}">${e}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- ── INJURIES ── -->
+      <div class="settings-section" style="margin-top:16px;">
+        <div class="settings-section-label">Active Injuries / Areas to protect</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${INJURIES.map(i=>`
+            <button onclick="toggleChip(this,'injuries','${i}')" data-key="injuries" data-val="${i}"
+              class="injury-chip ${inj.includes(i)?'on':''}">${i}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- ── NUTRITION ── -->
+      <div class="settings-section" style="margin-top:16px;">
+        <div class="settings-section-label">Nutrition Targets</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;">
+          ${macros ? `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+              ${[{dt:'Training',color:'var(--accent)',data:macros.training},{dt:'Rest',color:'var(--blue)',data:macros.rest}].map(d=>`
+                <div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--subtle);margin-bottom:5px;">${d.dt}</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:${d.color};">${d.data.kcal}<span style="font-size:12px;color:var(--subtle);"> kcal</span></div>
+                  <div style="font-size:12px;color:var(--mid);margin-top:3px;">P ${d.data.protein}g · C ${d.data.carbs}g · F ${d.data.fat}g</div>
+                </div>`).join('')}
+            </div>` : '<div style="font-size:13px;color:var(--subtle);">Not set up yet.</div>'}
+          <button onclick="document.getElementById('settings-overlay').remove();showTab('nutrition');openNutritionSettings();"
+            style="width:100%;padding:11px;background:var(--card2);border:1.5px solid var(--border2);border-radius:10px;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;">
+            Edit nutrition profile →
+          </button>
+        </div>
+      </div>
+
+      <!-- ── LANGUAGE ── -->
+      <div class="settings-section" style="margin-top:16px;">
+        <div class="settings-section-label">Language</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${LANGS.map(([code,label])=>`
+            <button onclick="setLang('${code}');updateLangButtons()"
+              id="lang-btn-${code}"
+              style="padding:10px 18px;border-radius:99px;border:1.5px solid ${currentLang===code?'var(--accent)':'var(--border2)'};background:${currentLang===code?'var(--accent-light)':'var(--card2)'};color:${currentLang===code?'var(--accent)':'var(--mid)'};font-size:14px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;">${label}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- ── SAVE ── -->
+      <div style="padding:20px;">
+        <button onclick="saveSettingsAndClose()"
+          style="width:100%;padding:17px;background:linear-gradient(135deg,var(--accent),var(--accent)cc);color:#0a0a08;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;box-shadow:0 4px 18px var(--accent-glow);">
+          Save
+        </button>
+      </div>
+    </div>`;
+
+  overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+// Track goal selection
+let _pendingGoal = null;
+function setGoalPref(val, btn) {
+  _pendingGoal = val;
+  // Update UI
+  btn.closest('div').querySelectorAll('button[data-goal]').forEach(b => {
+    const isThis = b.dataset.goal === val;
+    b.style.background = isThis ? 'var(--accent-light)' : 'var(--card)';
+    b.style.borderColor = isThis ? 'var(--accent)' : 'var(--border)';
+    const numEl = b.querySelector('div:first-child');
+    if (numEl) {
+      numEl.style.background = isThis ? 'var(--accent)' : 'var(--card2)';
+      numEl.style.color = isThis ? '#0a0a08' : 'var(--subtle)';
+      numEl.style.borderColor = isThis ? 'var(--accent)' : 'var(--border2)';
+      numEl.textContent = isThis ? '✓' : {loss:'1',recomp:'2',perf:'3',gain:'4'}[b.dataset.goal];
+    }
+  });
+}
+
+function toggleChip(btn, key, val) {
+  btn.classList.toggle('on');
+  // Persist immediately
+  const p = getProfile();
+  if (!p[key]) p[key] = [];
+  if (p[key].includes(val)) {
+    p[key] = p[key].filter(v => v !== val);
+  } else {
+    p[key].push(val);
+  }
+  saveProfile(p);
+}
+
+function updateLangButtons() {
+  ['en','fr','es','de'].forEach(code => {
+    const btn = document.getElementById('lang-btn-' + code);
+    if (!btn) return;
+    const isActive = currentLang === code;
+    btn.style.borderColor = isActive ? 'var(--accent)' : 'var(--border2)';
+    btn.style.background  = isActive ? 'var(--accent-light)' : 'var(--card2)';
+    btn.style.color       = isActive ? 'var(--accent)' : 'var(--mid)';
+  });
+}
+
+function saveSettingsAndClose() {
+  const p = getProfile();
+  const name   = document.getElementById('s-name')?.value?.trim();
+  const age    = Number(document.getElementById('s-age')?.value);
+  const weight = Number(document.getElementById('s-weight')?.value);
+  const height = Number(document.getElementById('s-height')?.value);
+
+  if (name)   p.name   = name;
+  if (age)    p.age    = age;
+  if (weight) p.weight = weight;
+  if (height) p.height = height;
+  if (_pendingGoal) p.goal = _pendingGoal;
+  _pendingGoal = null;
+
+  saveProfile(p);
+
+  // Also sync to nutrition profile if it exists
+  const ns = JSON.parse(localStorage.getItem('atlas_nutrition') || '{}');
+  if (ns.profile) {
+    if (age)    ns.profile.age    = age;
+    if (weight) ns.profile.weight = weight;
+    if (height) ns.profile.height = height;
+    if (p.goal) ns.profile.goal   = p.goal;
+    // Recalculate macros
+    if (typeof calcMacros === 'function') ns.macros = calcMacros(ns.profile);
+    localStorage.setItem('atlas_nutrition', JSON.stringify(ns));
+  }
+
+  document.getElementById('settings-overlay')?.remove();
 }
 
 function injectScreenHeaders() {
