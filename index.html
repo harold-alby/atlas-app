@@ -3158,7 +3158,8 @@ function openNutritionSettings() {
   ovl.appendChild(sheet);
   document.body.appendChild(ovl);
   ovl.onclick = function(e){ if(e.target===ovl) ovl.remove(); };
-  sheet.querySelector('#nut-settings-close').onclick = function(){ ovl.remove(); };
+  const nutClose = document.getElementById('nut-settings-close');
+  if (nutClose) nutClose.onclick = function(){ ovl.remove(); };
 }
 
 function saveNutritionSettings() {
@@ -3845,14 +3846,26 @@ function renderNutrition() {
   const ns = getNS();
   if (!ns.profile) { startOnboarding(); return; }
 
+  // Ensure correct panel visibility
+  const mainEl = document.getElementById('nutrition-main');
+  const onbEl  = document.getElementById('nutrition-onboarding');
+  if (mainEl) { mainEl.classList.remove('hidden'); mainEl.style.display = ''; }
+  if (onbEl)  { onbEl.classList.add('hidden'); }
+
   // Day type toggle
   const dt = ns.dayType || 'training';
-  const activeBtnStyle = `background:var(--accent);color:#0a0a08;`;
-  const inactiveBtnStyle = `background:transparent;color:var(--mid);`;
   const tBtn = document.getElementById('day-type-training');
   const rBtn = document.getElementById('day-type-rest');
-  if (tBtn) tBtn.style.cssText += dt==='training' ? activeBtnStyle : inactiveBtnStyle;
-  if (rBtn) rBtn.style.cssText += dt==='rest' ? activeBtnStyle : inactiveBtnStyle;
+  if (tBtn) {
+    tBtn.style.background = dt==='training' ? 'var(--accent)' : 'transparent';
+    tBtn.style.color      = dt==='training' ? '#0a0a08'       : 'var(--mid)';
+    tBtn.style.fontWeight = dt==='training' ? '700'           : '500';
+  }
+  if (rBtn) {
+    rBtn.style.background = dt==='rest' ? 'var(--accent)' : 'transparent';
+    rBtn.style.color      = dt==='rest' ? '#0a0a08'       : 'var(--mid)';
+    rBtn.style.fontWeight = dt==='rest' ? '700'           : '500';
+  }
 
   // Sub-nav
   ['today','week','templates'].forEach(v => {
