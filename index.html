@@ -685,9 +685,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 <div id="screen-log" class="screen">
 <div class="screen-inner">
   <div id="screen-header-log"></div>
- <div class="eyebrow">History</div>
- <div class="hero-title">Session<br><span class="acc">Log</span></div>
- <div id="log-list"></div>
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <div class="eyebrow">History</div>
+      <div class="hero-title">Session<br><span class="acc">Log</span></div>
+    </div>
+    <button onclick="openLogEntry()" id="log-add-btn"
+      style="width:44px;height:44px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;color:#0a0a08;font-size:26px;font-weight:300;
+      box-shadow:0 2px 12px var(--accent-glow);flex-shrink:0;margin-bottom:6px;line-height:1;">+</button>
+  </div>
+  <!-- Filter tabs -->
+  <div id="log-filter-tabs" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;margin-bottom:16px;"></div>
+  <div id="log-list"></div>
 </div>
 </div>
 
@@ -2982,25 +2992,562 @@ function markSkillAchieved(trackId, nodeId) {
   renderSkills();
 }
 
-function renderLog() {
- const list = document.getElementById('log-list');
- if (!STATE.sessionLog.length) {
- list.innerHTML = `<div style="text-align:center;padding:48px 24px;color:var(--mid);background:transparent;">
- <div style="font-size:40px;margin-bottom:12px;"></div>
- <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;">No sessions yet</div>
- <div style="font-size:14px;margin-top:6px;">Complete a session to see it here.</div>
- </div>`;
- return;
- }
 
- const typeColors = { skills:'#c9a84c', strength:'#1d4ed8', handstand:'#7c3aed', conditioning:'#be123c', full:'#15803d' };
- list.innerHTML = STATE.sessionLog.slice(0, 20).map(s => `
- <div class="hist-card">
- <div class="hist-date">${s.date}</div>
- <div class="hist-meta">${s.duration ? s.duration + ' min · ' : ''}${s.type || 'Full session'}</div>
- ${s.skills?.length ? `<div class="hist-tags">${s.skills.map(sk => `<span class="hist-tag" style="background:${typeColors[sk]||'#f0f0f0'}20;color:${typeColors[sk]||'var(--mid)'};">${sk}</span>`).join('')}</div>` : ''}
- </div>`).join('');
+// ── Onboarding ────────────────────────────────────────────────────
+const ONB_STEPS = ['goal','sex','age','weight','height','activity','done'];
+let onbData = {};
+let onbStep = 0;
+
+function startOnboarding() {
+  onbData = {}; onbStep = 0;
+  const main = document.getElementById('nutrition-main');
+  const onb  = document.getElementById('nutrition-onboarding');
+  if (main) main.classList.add('hidden');
+  if (onb)  onb.classList.remove('hidden');
+  renderOnbStep();
 }
+
+function finishOnboarding() {
+  try {
+    const ns = getNS();
+    if (ns.profile) {
+      const p = getProfile();
+      if (ns.profile.age)    p.age    = ns.profile.age;
+      if (ns.profile.weight) p.weight = ns.profile.weight;
+      if (ns.profile.height) p.height = ns.profile.height;
+      if (ns.profile.goal)   p.goal   = ns.profile.goal;
+      saveProfile(p);
+    }
+  } catch(e) {}
+  const main = document.getElementById('nutrition-main');
+  const onb  = document.getElementById('nutrition-onboarding');
+  if (main) main.classList.remove('hidden');
+  if (onb)  onb.classList.add('hidden');
+  renderNutrition();
+}
+
+function onbSelect(key, val) { onbData[key] = val; renderOnbStep(); }
+function onbNext() { onbStep++; renderOnbStep(); }
+
+function renderOnbStep() {
+  const step = ONB_STEPS[onbStep];
+  const el = document.getElementById('onboarding-step');
+  if (!el) return;
+
+  const progressHTML = '<div style="display:flex;gap:5px;margin-bottom:28px;">' +
+    ONB_STEPS.slice(0,-1).map((_,i) =>
+      '<div style="flex:1;height:2px;border-radius:2px;background:' + (i<=onbStep?'var(--accent)':'var(--border)') + ';transition:background 0.3s;"></div>'
+    ).join('') + '</div>';
+
+  if (step === 'goal') {
+    el.innerHTML = progressHTML +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">Nutrition Plan Setup</div>' +
+      '<div style="font-family:Barlow Condensed,sans-serif;font-size:40px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:24px;">Your Goal</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px;">' +
+      [['loss','Fat Loss','Reduce body fat'],['recomp','Recomposition','Lose fat, gain muscle'],['perf','Performance','Fuel training output'],['gain','Muscle Gain','Build size and strength']].map(([val,label,sub],idx) =>
+        '<button onclick="onbSelect(\'goal\',\''+val+'\')" class="onb-option ' + (onbData.goal===val?'selected':'') + '">' +
+        '<div class="onb-option-num">'+(idx+1)+'</div>' +
+        '<div><div class="onb-option-label">'+label+'</div><div style="font-size:13px;color:var(--mid);margin-top:2px;">'+sub+'</div></div>' +
+        (onbData.goal===val?'<span style="margin-left:auto;color:var(--accent);font-size:18px;">✓</span>':'') +
+        '</button>'
+      ).join('') + '</div>' +
+      (onbData.goal ? '<button onclick="onbNext()" class="btn-primary" style="margin-top:20px;">Continue →</button>' : '');
+
+  } else if (step === 'sex') {
+    el.innerHTML = progressHTML +
+      '<div style="font-family:Barlow Condensed,sans-serif;font-size:40px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:24px;">Biological Sex</div>' +
+      '<div style="display:flex;gap:12px;">' +
+      [['male','Male','M'],['female','Female','F']].map(([val,label,letter]) =>
+        '<button onclick="onbSelect(\'sex\',\''+val+'\')" style="flex:1;padding:24px 16px;background:'+(onbData.sex===val?'var(--accent-light)':'var(--card)')+';border:1.5px solid '+(onbData.sex===val?'var(--accent)':'var(--border)')+';border-radius:16px;cursor:pointer;text-align:center;">' +
+        '<div style="font-family:Barlow Condensed,sans-serif;font-size:32px;font-weight:700;color:'+(onbData.sex===val?'var(--accent)':'var(--ink)')+';">' + letter + '</div>' +
+        '<div style="font-size:15px;font-weight:600;color:var(--ink);">' + label + '</div></button>'
+      ).join('') + '</div>' +
+      (onbData.sex ? '<button onclick="onbNext()" class="btn-primary" style="margin-top:20px;">Continue →</button>' : '');
+
+  } else if (['age','weight','height'].includes(step)) {
+    const cfg = {age:{label:'Age',unit:'years',ph:'e.g. 35'},weight:{label:'Weight',unit:'kg',ph:'e.g. 82'},height:{label:'Height',unit:'cm',ph:'e.g. 178'}}[step];
+    el.innerHTML = progressHTML +
+      '<div style="font-family:Barlow Condensed,sans-serif;font-size:40px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:24px;">' + cfg.label + '</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">' +
+      '<input type="number" id="onb-input" placeholder="' + cfg.ph + '" value="' + (onbData[step]||'') + '" ' +
+      'style="flex:1;padding:18px;font-family:Barlow Condensed,sans-serif;font-size:32px;font-weight:700;background:var(--card);border:1.5px solid var(--border2);border-radius:14px;color:var(--ink);text-align:center;outline:none;" ' +
+      'oninput="onbData.' + step + '=this.value">' +
+      '<span style="font-size:16px;font-weight:600;color:var(--mid);min-width:40px;">' + cfg.unit + '</span></div>' +
+      '<button onclick="if(onbData.' + step + '>0)onbNext()" class="btn-primary">Continue →</button>';
+    setTimeout(function(){ const i=document.getElementById('onb-input'); if(i) i.focus(); }, 100);
+
+  } else if (step === 'activity') {
+    el.innerHTML = progressHTML +
+      '<div style="font-family:Barlow Condensed,sans-serif;font-size:40px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:24px;">Activity Level</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px;">' +
+      [['low','Lightly active','1–2 sessions per week'],['mod','Moderately active','3–4 sessions per week'],['high','Very active','5–6 sessions per week'],['elite','Athlete','Daily training']].map(([val,label,sub],idx) =>
+        '<button onclick="onbSelect(\'activity\',\''+val+'\')" class="onb-option ' + (onbData.activity===val?'selected':'') + '">' +
+        '<div class="onb-option-num">'+(idx+1)+'</div>' +
+        '<div><div class="onb-option-label">'+label+'</div><div style="font-size:13px;color:var(--mid);margin-top:2px;">'+sub+'</div></div>' +
+        (onbData.activity===val?'<span style="margin-left:auto;color:var(--accent);font-size:18px;">✓</span>':'') +
+        '</button>'
+      ).join('') + '</div>' +
+      (onbData.activity ? '<button onclick="onbNext()" class="btn-primary" style="margin-top:20px;">Build my plan →</button>' : '');
+
+  } else if (step === 'done') {
+    const ns = getNS();
+    ns.profile = {
+      goal:onbData.goal, sex:onbData.sex,
+      age:Number(onbData.age), weight:Number(onbData.weight),
+      height:Number(onbData.height), activity:onbData.activity
+    };
+    ns.macros = calcMacros(ns.profile);
+    saveNS(ns);
+    const m = ns.macros;
+    el.innerHTML = '<div style="text-align:center;padding:20px 0;">' +
+      '<div style="font-family:Barlow Condensed,sans-serif;font-size:48px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Plan Ready</div>' +
+      '<div style="font-size:14px;color:var(--mid);margin-bottom:28px;">Based on your profile. Adjustable any time in settings.</div>' +
+      (m ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;">' +
+        [{dt:'Training',color:'var(--accent)',data:m.training},{dt:'Rest',color:'var(--blue)',data:m.rest}].map(d =>
+          '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;">' +
+          '<div style="font-size:11px;font-weight:700;letter-spacing:0.15em;color:var(--subtle);text-transform:uppercase;margin-bottom:8px;">' + d.dt + '</div>' +
+          '<div style="font-family:Barlow Condensed,sans-serif;font-size:38px;font-weight:700;color:' + d.color + ';line-height:1;">' + d.data.kcal + '</div>' +
+          '<div style="font-size:11px;color:var(--subtle);margin-bottom:10px;">kcal</div>' +
+          '<div style="font-size:13px;color:var(--ink2);line-height:1.9;">P: ' + d.data.protein + 'g<br>C: ' + d.data.carbs + 'g<br>F: ' + d.data.fat + 'g</div></div>'
+        ).join('') + '</div>' : '') +
+      '<button onclick="finishOnboarding()" class="btn-primary">Start tracking →</button></div>';
+  }
+}
+
+// ── Nutrition Settings ────────────────────────────────────────────
+function openNutritionSettings() {
+  const ns = getNS();
+  const p  = ns.profile || {};
+
+  const ovl = document.createElement('div');
+  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:flex;align-items:flex-end;backdrop-filter:blur(6px);';
+
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:var(--card);border-radius:22px 22px 0 0;padding:22px 18px calc(var(--safe-bottom)+22px);width:100%;max-width:520px;margin:0 auto;max-height:85vh;overflow-y:auto;';
+
+  const GOAL_OPTS = [['loss','Fat Loss'],['recomp','Recomposition'],['perf','Performance'],['gain','Muscle Gain']];
+
+  sheet.innerHTML =
+    '<div style="width:34px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 18px;"></div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">' +
+    '<div style="font-family:Barlow Condensed,sans-serif;font-size:26px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;">Nutrition Settings</div>' +
+    '<button id="nut-settings-close" style="width:32px;height:32px;border-radius:9px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:16px;">✕</button></div>' +
+    '<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Profile</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
+    [['nut-weight','Weight (kg)',p.weight||''],['nut-height','Height (cm)',p.height||''],['nut-age','Age',p.age||'']].map(([id,lbl,val]) =>
+      '<div><div style="font-size:11px;color:var(--mid);margin-bottom:4px;">' + lbl + '</div>' +
+      '<input id="' + id + '" type="number" value="' + val + '" style="width:100%;padding:11px;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;color:var(--ink);font-size:14px;outline:none;box-sizing:border-box;"></div>'
+    ).join('') +
+    '<div><div style="font-size:11px;color:var(--mid);margin-bottom:4px;">Goal</div>' +
+    '<select id="nut-goal" style="width:100%;padding:11px;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;color:var(--ink);font-size:14px;outline:none;">' +
+    GOAL_OPTS.map(([v,l]) => '<option value="' + v + '"' + (p.goal===v?' selected':'') + '>' + l + '</option>').join('') +
+    '</select></div></div></div>';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn-primary';
+  saveBtn.textContent = 'Save changes';
+  saveBtn.onclick = function() { saveNutritionSettings(); ovl.remove(); };
+  sheet.appendChild(saveBtn);
+
+  const redoBtn = document.createElement('button');
+  redoBtn.style.cssText = 'width:100%;padding:13px;background:transparent;border:none;color:var(--subtle);font-size:13px;cursor:pointer;margin-top:8px;';
+  redoBtn.textContent = 'Redo questionnaire';
+  redoBtn.onclick = function() { ovl.remove(); startOnboarding(); };
+  sheet.appendChild(redoBtn);
+
+  ovl.appendChild(sheet);
+  document.body.appendChild(ovl);
+  ovl.onclick = function(e){ if(e.target===ovl) ovl.remove(); };
+  sheet.querySelector('#nut-settings-close').onclick = function(){ ovl.remove(); };
+}
+
+function saveNutritionSettings() {
+  const ns = getNS();
+  if (!ns.profile) ns.profile = {};
+  const w = Number(document.getElementById('nut-weight')?.value);
+  const h = Number(document.getElementById('nut-height')?.value);
+  const a = Number(document.getElementById('nut-age')?.value);
+  const g = document.getElementById('nut-goal')?.value;
+  if (w) ns.profile.weight = w;
+  if (h) ns.profile.height = h;
+  if (a) ns.profile.age    = a;
+  if (g) ns.profile.goal   = g;
+  ns.macros = calcMacros(ns.profile);
+  saveNS(ns);
+  renderNutrition();
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// SESSION LOG — Manual + auto entries, photos, scores
+// ═══════════════════════════════════════════════════════════════
+
+const SESSION_TYPES = [
+  { id:'wod',       label:'WOD',           color:'#ef4444', sub:'CrossFit class'           },
+  { id:'open-gym',  label:'Open Gym',       color:'#c9a84c', sub:'Strength / skill work'    },
+  { id:'cardio',    label:'Cardio',         color:'#38bdf8', sub:'Row, bike, run, ski'      },
+  { id:'hyrox',     label:'HYROX',          color:'#f97316', sub:'HYROX-style training'     },
+  { id:'class',     label:'Class',          color:'#a78bfa', sub:'Pilates, boxing, etc.'    },
+  { id:'mobility',  label:'Mobility',       color:'#34d399', sub:'Yoga, stretching'         },
+  { id:'comp',      label:'Competition',    color:'#fbbf24', sub:'Event / competition'      },
+  { id:'custom',    label:'Custom',         color:'#94a3b8', sub:'Anything else'            },
+];
+
+const SCORE_TYPES = [
+  { id:'time',   label:'Time',        placeholder:'e.g. 12:34', hint:'mm:ss' },
+  { id:'rounds', label:'Rounds + Reps', placeholder:'e.g. 5+12', hint:'rounds+reps' },
+  { id:'load',   label:'Load',        placeholder:'e.g. 100kg × 5', hint:'kg × reps' },
+  { id:'dist',   label:'Distance',    placeholder:'e.g. 5000m', hint:'metres' },
+  { id:'cals',   label:'Calories',    placeholder:'e.g. 120', hint:'cal' },
+  { id:'pass',   label:'Pass / Fail', placeholder:'', hint:'' },
+  { id:'note',   label:'Note',        placeholder:'Free text…', hint:'' },
+];
+
+const CARDIO_TYPES = ['Row','Bike','Run','Ski Erg','Assault Bike','Swimming'];
+
+let logFilter = 'all';
+
+function getSessionLog() {
+  return JSON.parse(localStorage.getItem('atlas_session_log') || '[]');
+}
+function saveSessionLog(log) {
+  localStorage.setItem('atlas_session_log', JSON.stringify(log));
+}
+
+function renderLog() {
+  const log = getSessionLog().concat(
+    // migrate old STATE.sessionLog entries
+    (STATE.sessionLog || []).filter(s => !s._migrated).map(s => ({
+      id: s.timestamp || Date.now(),
+      type: s.type === 'skills' ? 'open-gym' : s.type === 'conditioning' ? 'wod' : 'open-gym',
+      date: s.date || new Date(s.timestamp||Date.now()).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),
+      ts: s.timestamp || Date.now(),
+      duration: s.duration || null,
+      score: null, scoreType: null, note: null, photo: null,
+      _migrated: true,
+    }))
+  ).sort((a,b) => (b.ts||0) - (a.ts||0));
+
+  // Filter tabs
+  const filterEl = document.getElementById('log-filter-tabs');
+  const listEl   = document.getElementById('log-list');
+  if (!filterEl || !listEl) return;
+
+  const typeCounts = {};
+  log.forEach(s => { typeCounts[s.type] = (typeCounts[s.type]||0) + 1; });
+
+  filterEl.innerHTML = [{ id:'all', label:'All', color:'var(--accent)' }]
+    .concat(SESSION_TYPES.filter(t => typeCounts[t.id]))
+    .map(t => {
+      const active = logFilter === t.id;
+      return `<button onclick="setLogFilter('${t.id}')"
+        style="flex-shrink:0;padding:8px 16px;border-radius:99px;border:1.5px solid ${active ? t.color : 'var(--border2)'};
+        background:${active ? t.color+'18' : 'var(--card2)'};color:${active ? t.color : 'var(--mid)'};
+        font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+        ${t.label}${typeCounts[t.id] ? '<span style="font-size:10px;opacity:0.6;margin-left:4px;">'+typeCounts[t.id]+'</span>' : ''}
+      </button>`;
+    }).join('');
+
+  const filtered = logFilter === 'all' ? log : log.filter(s => s.type === logFilter);
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div style="text-align:center;padding:48px 24px;color:var(--mid);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;margin-bottom:8px;">No sessions yet</div>
+      <div style="font-size:14px;">Tap + to log your first session.</div>
+    </div>`;
+    return;
+  }
+
+  // Group by date
+  const grouped = {};
+  filtered.forEach(s => {
+    const d = s.date || 'Unknown';
+    if (!grouped[d]) grouped[d] = [];
+    grouped[d].push(s);
+  });
+
+  listEl.innerHTML = Object.entries(grouped).map(([date, sessions]) => {
+    const cards = sessions.map(s => {
+      const t = SESSION_TYPES.find(t => t.id === s.type) || SESSION_TYPES[SESSION_TYPES.length-1];
+      const scoreStr = formatScore(s);
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;"
+        onclick="openLogDetail('${s.id}')">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="width:42px;height:42px;border-radius:12px;background:${t.color}18;border:1px solid ${t.color}30;
+            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:800;color:${t.color};letter-spacing:0.04em;text-align:center;line-height:1.2;">${t.label.toUpperCase()}</span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:16px;font-weight:600;color:var(--ink);">${s.name || t.label}</div>
+            <div style="font-size:12px;color:var(--mid);margin-top:2px;">
+              ${s.duration ? s.duration + ' min' : ''}${s.duration && scoreStr ? ' · ' : ''}${scoreStr}
+            </div>
+            ${s.note ? `<div style="font-size:13px;color:var(--mid);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.note}</div>` : ''}
+          </div>
+          ${s.photo ? `<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;">
+            <img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;">
+          </div>` : ''}
+        </div>
+        ${s.tags && s.tags.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+          ${s.tags.map(tag => `<span style="font-size:11px;padding:2px 9px;border-radius:99px;background:${t.color}15;color:${t.color};font-weight:600;">${tag}</span>`).join('')}
+        </div>` : ''}
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:4px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">${date}</div>
+      ${cards}
+    </div>`;
+  }).join('');
+}
+
+function formatScore(s) {
+  if (!s.score && s.scoreType !== 'pass') return '';
+  if (s.scoreType === 'time')   return '⏱ ' + s.score;
+  if (s.scoreType === 'rounds') return '🔄 ' + s.score;
+  if (s.scoreType === 'load')   return '🏋 ' + s.score;
+  if (s.scoreType === 'dist')   return '📏 ' + s.score;
+  if (s.scoreType === 'cals')   return '🔥 ' + s.score + ' cal';
+  if (s.scoreType === 'pass')   return s.score === 'pass' ? '✓ Pass' : '✗ Fail';
+  return s.score || '';
+}
+
+function setLogFilter(type) {
+  logFilter = type;
+  renderLog();
+}
+
+// ── Log Entry Sheet ───────────────────────────────────────────────
+function openLogEntry(existingId) {
+  const existing = existingId ? getSessionLog().find(s => s.id === existingId) : null;
+  let entry = existing ? Object.assign({}, existing) : {
+    id: Date.now(),
+    ts: Date.now(),
+    type: 'wod',
+    name: '',
+    date: new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),
+    duration: '',
+    scoreType: null,
+    score: '',
+    note: '',
+    photo: null,
+    tags: [],
+  };
+
+  const ovl = document.createElement('div');
+  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:400;display:flex;align-items:flex-end;backdrop-filter:blur(8px);';
+
+  function render() {
+    const t = SESSION_TYPES.find(t => t.id === entry.type) || SESSION_TYPES[0];
+    const scoreT = SCORE_TYPES.find(s => s.id === entry.scoreType);
+
+    ovl.innerHTML = `<div style="background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;margin:0 auto;
+      max-height:92vh;overflow-y:auto;padding-bottom:calc(var(--safe-bottom)+24px);">
+
+      <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:16px auto 0;"></div>
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:12px;padding:16px 20px 12px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;flex:1;">
+          ${existing ? 'Edit Session' : 'Log Session'}
+        </div>
+        <button onclick="this.closest('div[style*=inset]').remove()"
+          style="width:32px;height:32px;border-radius:9px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:16px;">✕</button>
+      </div>
+
+      <div style="padding:0 20px;">
+
+        <!-- Session type -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Session Type</div>
+        <div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;margin-bottom:16px;">
+          ${SESSION_TYPES.map(st => `
+            <button onclick="_logSetType('${st.id}')"
+              style="flex-shrink:0;padding:9px 14px;border-radius:12px;border:1.5px solid ${entry.type===st.id ? st.color : 'var(--border2)'};
+              background:${entry.type===st.id ? st.color+'18' : 'var(--card2)'};cursor:pointer;text-align:left;">
+              <div style="font-size:13px;font-weight:700;color:${entry.type===st.id ? st.color : 'var(--ink)'};">${st.label}</div>
+              <div style="font-size:10px;color:var(--subtle);">${st.sub}</div>
+            </button>`).join('')}
+        </div>
+
+        <!-- Cardio subtype (only for cardio) -->
+        ${entry.type === 'cardio' ? `
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Activity</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;">
+          ${CARDIO_TYPES.map(ct => `
+            <button onclick="_logSetCardioType('${ct}')"
+              style="padding:8px 14px;border-radius:99px;border:1.5px solid ${(entry.name||'')==ct?'var(--accent)':'var(--border2)'};
+              background:${(entry.name||'')==ct?'var(--accent-light)':'var(--card2)'};color:${(entry.name||'')==ct?'var(--accent)':'var(--mid)'};
+              font-size:13px;font-weight:600;cursor:pointer;">${ct}</button>`).join('')}
+        </div>` : ''}
+
+        <!-- Session name -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">
+          ${entry.type === 'wod' ? 'WOD Name / Description' : entry.type === 'cardio' ? 'Details (optional)' : 'Session Name'}
+        </div>
+        <input id="log-name" placeholder="${entry.type === 'wod' ? 'e.g. Fran, 21-15-9 Thrusters…' : 'e.g. Back squat focus'}"
+          value="${entry.name || ''}"
+          style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);
+          font-size:15px;outline:none;box-sizing:border-box;margin-bottom:14px;"
+          oninput="entry_draft.name=this.value">
+
+        <!-- Duration -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Duration (min)</div>
+            <input id="log-duration" type="number" placeholder="45" value="${entry.duration || ''}"
+              style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:15px;outline:none;box-sizing:border-box;"
+              oninput="entry_draft.duration=this.value">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Date</div>
+            <input id="log-date" type="date" value="${toDateInput(entry.ts)}"
+              style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:14px;outline:none;box-sizing:border-box;"
+              oninput="entry_draft.dateInput=this.value">
+          </div>
+        </div>
+
+        <!-- Score type -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Score</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          ${SCORE_TYPES.map(st => `
+            <button onclick="_logSetScore('${st.id}')"
+              style="padding:7px 13px;border-radius:99px;border:1.5px solid ${entry.scoreType===st.id?'var(--accent)':'var(--border2)'};
+              background:${entry.scoreType===st.id?'var(--accent-light)':'var(--card2)'};color:${entry.scoreType===st.id?'var(--accent)':'var(--mid)'};
+              font-size:12px;font-weight:600;cursor:pointer;">${st.label}</button>`).join('')}
+        </div>
+        ${entry.scoreType && entry.scoreType !== 'pass' ? `
+        <input id="log-score" placeholder="${scoreT ? scoreT.placeholder : ''}"
+          value="${entry.score || ''}"
+          style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--accent)30;border-radius:11px;color:var(--ink);
+          font-size:15px;outline:none;box-sizing:border-box;margin-bottom:14px;"
+          oninput="entry_draft.score=this.value">` : ''}
+        ${entry.scoreType === 'pass' ? `
+        <div style="display:flex;gap:10px;margin-bottom:14px;">
+          <button onclick="_logSetPassFail('pass')"
+            style="flex:1;padding:13px;border-radius:11px;border:1.5px solid ${entry.score==='pass'?'var(--green)':'var(--border2)'};
+            background:${entry.score==='pass'?'rgba(52,201,154,0.12)':'var(--card2)'};color:${entry.score==='pass'?'var(--green)':'var(--mid)'};font-size:15px;font-weight:700;cursor:pointer;">✓ Pass</button>
+          <button onclick="_logSetPassFail('fail')"
+            style="flex:1;padding:13px;border-radius:11px;border:1.5px solid ${entry.score==='fail'?'var(--red)':'var(--border2)'};
+            background:${entry.score==='fail'?'rgba(248,113,113,0.12)':'var(--card2)'};color:${entry.score==='fail'?'var(--red)':'var(--mid)'};font-size:15px;font-weight:700;cursor:pointer;">✗ Fail</button>
+        </div>` : ''}
+
+        <!-- Note -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Notes</div>
+        <textarea id="log-note" placeholder="How did it go? Any PRs, scaling, how you felt…" rows="3"
+          style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);
+          font-size:14px;outline:none;resize:none;box-sizing:border-box;margin-bottom:16px;line-height:1.55;"
+          oninput="entry_draft.note=this.value">${entry.note || ''}</textarea>
+
+        <!-- Photo -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">WOD Board / Photo</div>
+        ${entry.photo ? `
+        <div style="position:relative;margin-bottom:14px;">
+          <img src="${entry.photo}" style="width:100%;border-radius:13px;max-height:220px;object-fit:cover;">
+          <button onclick="_logClearPhoto()"
+            style="position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;cursor:pointer;color:#fff;font-size:14px;">×</button>
+        </div>` : `
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;background:var(--card);
+            border:1.5px dashed var(--border2);border-radius:13px;cursor:pointer;color:var(--mid);font-size:14px;font-weight:600;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Camera
+            <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="_logPhotoCapture(this)">
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;background:var(--card);
+            border:1.5px dashed var(--border2);border-radius:13px;cursor:pointer;color:var(--mid);font-size:14px;font-weight:600;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Gallery
+            <input type="file" accept="image/*" style="display:none;" onchange="_logPhotoCapture(this)">
+          </label>
+        </div>`}
+
+        <!-- Tags -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Tags</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px;">
+          ${['PR','Rx','Scaled','Team','Benchmark','First time'].map(tag => `
+            <button onclick="_logToggleTag('${tag}')"
+              style="padding:7px 13px;border-radius:99px;border:1.5px solid ${(entry.tags||[]).includes(tag)?t.color:'var(--border2)'};
+              background:${(entry.tags||[]).includes(tag)?t.color+'18':'var(--card2)'};
+              color:${(entry.tags||[]).includes(tag)?t.color:'var(--mid)'};font-size:12px;font-weight:600;cursor:pointer;">${tag}</button>`).join('')}
+        </div>
+
+        <!-- Save -->
+        <div style="display:flex;gap:10px;">
+          ${existing ? `<button onclick="_logDelete('${existing.id}')"
+            style="padding:16px 20px;background:rgba(248,113,113,0.1);border:1.5px solid var(--red)30;border-radius:13px;color:var(--red);font-size:14px;font-weight:700;cursor:pointer;">Delete</button>` : ''}
+          <button onclick="_logSave()"
+            style="flex:1;padding:16px;background:linear-gradient(135deg,var(--accent),#a8733a);color:#0a0a08;border:none;
+            border-radius:13px;font-size:16px;font-weight:700;cursor:pointer;">
+            ${existing ? 'Save Changes' : 'Log Session'}
+          </button>
+        </div>
+
+      </div>
+    </div>`;
+
+    // Bind handlers to current entry
+    window.entry_draft = entry;
+    window._logSetType = function(typeId) { entry.type=typeId; render(); };
+    window._logSetCardioType = function(ct) { entry.name=ct; render(); };
+    window._logSetScore = function(typeId) { entry.scoreType = entry.scoreType===typeId ? null : typeId; entry.score=''; render(); };
+    window._logSetPassFail = function(val) { entry.score=val; render(); };
+    window._logToggleTag = function(tag) {
+      if (!entry.tags) entry.tags=[];
+      entry.tags = entry.tags.includes(tag) ? entry.tags.filter(t=>t!==tag) : [...entry.tags, tag];
+      render();
+    };
+    window._logClearPhoto = function() { entry.photo=null; render(); };
+    window._logPhotoCapture = function(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) { entry.photo = e.target.result; render(); };
+      reader.readAsDataURL(file);
+    };
+    window._logSave = function() {
+      // Read live input values
+      const nameEl = document.getElementById('log-name');
+      const durEl  = document.getElementById('log-duration');
+      const scoreEl= document.getElementById('log-score');
+      const noteEl = document.getElementById('log-note');
+      const dateEl = document.getElementById('log-date');
+      if (nameEl)  entry.name     = nameEl.value.trim();
+      if (durEl)   entry.duration = durEl.value ? Number(durEl.value) : null;
+      if (scoreEl) entry.score    = scoreEl.value.trim();
+      if (noteEl)  entry.note     = noteEl.value.trim();
+      if (dateEl && dateEl.value) {
+        const d = new Date(dateEl.value + 'T12:00:00');
+        entry.date = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+        entry.ts   = d.getTime();
+      }
+      const log = getSessionLog().filter(s => s.id !== entry.id);
+      log.unshift(entry);
+      if (log.length > 200) log.pop();
+      saveSessionLog(log);
+      ovl.remove();
+      renderLog();
+    };
+    window._logDelete = function(id) {
+      if (!confirm('Delete this session?')) return;
+      saveSessionLog(getSessionLog().filter(s => s.id !== id));
+      ovl.remove();
+      renderLog();
+    };
+  }
+
+  render();
+  ovl.onclick = e => { if (e.target === ovl) ovl.remove(); };
+  document.body.appendChild(ovl);
+}
+
+function openLogDetail(id) {
+  openLogEntry(id);
+}
+
+function toDateInput(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  return d.toISOString().slice(0,10);
+}
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // INIT
