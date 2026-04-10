@@ -3485,8 +3485,7 @@ function openLogEntry(existingId) {
       </div>
     </div>`;
 
-    // Bind handlers to current entry
-    window.entry_draft = entry;
+    // Bind handlers to current entry (entry_draft kept for legacy)
     window._logSetType = function(typeId) { entry.type=typeId; render(); };
     window._logSetCardioType = function(ct) { entry.name=ct; render(); };
     window._logSetScore = function(typeId) { entry.scoreType = entry.scoreType===typeId ? null : typeId; entry.score=''; render(); };
@@ -3500,26 +3499,51 @@ function openLogEntry(existingId) {
     window._logPhotoCapture = function(input) {
       const file = input.files[0];
       if (!file) return;
+      // Check file size — cap at 2MB to keep localStorage manageable
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Photo too large — please use a smaller image (max 2MB).');
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = function(e) { entry.photo = e.target.result; render(); };
+      reader.onload = function(e) {
+        // Resize to max 800px wide via canvas to keep storage manageable
+        const img = new Image();
+        img.onload = function() {
+          const maxW = 800;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          const canvas = document.createElement('canvas');
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          entry.photo = canvas.toDataURL('image/jpeg', 0.75);
+          render();
+        };
+        img.src = e.target.result;
+      };
       reader.readAsDataURL(file);
     };
     window._logSave = function() {
-      // Read live input values
-      const nameEl = document.getElementById('log-name');
-      const durEl  = document.getElementById('log-duration');
-      const scoreEl= document.getElementById('log-score');
-      const noteEl = document.getElementById('log-note');
-      const dateEl = document.getElementById('log-date');
+      // Read text fields from live DOM (other fields already on entry via handlers)
+      const nameEl  = document.getElementById('log-name');
+      const durEl   = document.getElementById('log-duration');
+      const scoreEl = document.getElementById('log-score');
+      const noteEl  = document.getElementById('log-note');
+      const dateEl  = document.getElementById('log-date');
       if (nameEl)  entry.name     = nameEl.value.trim();
       if (durEl)   entry.duration = durEl.value ? Number(durEl.value) : null;
-      if (scoreEl) entry.score    = scoreEl.value.trim();
+      if (scoreEl && entry.scoreType && entry.scoreType !== 'pass')
+                   entry.score    = scoreEl.value.trim();
       if (noteEl)  entry.note     = noteEl.value.trim();
       if (dateEl && dateEl.value) {
         const d = new Date(dateEl.value + 'T12:00:00');
         entry.date = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
         entry.ts   = d.getTime();
       }
+      // entry.photo, entry.type, entry.tags, entry.scoreType
+      // are all already correct on the entry object — do NOT overwrite them
+      if (!entry.ts) entry.ts = Date.now();
+      if (!entry.date) entry.date = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
       const log = getSessionLog().filter(s => s.id !== entry.id);
       log.unshift(entry);
       if (log.length > 200) log.pop();
