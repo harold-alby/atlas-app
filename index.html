@@ -416,34 +416,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 <div id="app">
 <div class="status-bar-shim"></div>
 
-<!-- ═══ TAB BAR ═══ -->
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="showTab('today')">
-    <span class="tab-icon" id="tab-icon-today"></span>
-    <span data-i18n="tab_today">Today</span>
-  </button>
-  <button class="tab-btn" onclick="showTab('train')">
-    <span class="tab-icon" id="tab-icon-train"></span>
-    <span data-i18n="tab_train">Train</span>
-  </button>
-  <button class="tab-btn" onclick="showTab('skills')">
-    <span class="tab-icon" id="tab-icon-skills"></span>
-    <span data-i18n="tab_skills">Skills</span>
-  </button>
-  <button class="tab-btn" onclick="showTab('rehab')">
-    <span class="tab-icon" id="tab-icon-rehab"></span>
-    <span data-i18n="tab_rehab">Rehab</span>
-  </button>
-  <button class="tab-btn" onclick="showTab('log')">
-    <span class="tab-icon" id="tab-icon-log"></span>
-    <span data-i18n="tab_log">Log</span>
-  </button>
-  <button class="tab-btn" onclick="showTab('nutrition')">
-    <span class="tab-icon" id="tab-icon-nutrition"></span>
-    <span data-i18n="tab_nutrition">Fuel</span>
- </button>
-</div>
-
 <script>
 // Inject tab icons immediately - no DOMContentLoaded wait needed
 (function() {
@@ -751,6 +723,34 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 </div>
 
 
+
+<!-- ═══ TAB BAR ═══ -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('today')">
+    <span class="tab-icon" id="tab-icon-today"></span>
+    <span data-i18n="tab_today">Today</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('train')">
+    <span class="tab-icon" id="tab-icon-train"></span>
+    <span data-i18n="tab_train">Train</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('skills')">
+    <span class="tab-icon" id="tab-icon-skills"></span>
+    <span data-i18n="tab_skills">Skills</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('rehab')">
+    <span class="tab-icon" id="tab-icon-rehab"></span>
+    <span data-i18n="tab_rehab">Rehab</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('log')">
+    <span class="tab-icon" id="tab-icon-log"></span>
+    <span data-i18n="tab_log">Log</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('nutrition')">
+    <span class="tab-icon" id="tab-icon-nutrition"></span>
+    <span data-i18n="tab_nutrition">Fuel</span>
+ </button>
+</div>
 </div><!-- #app -->
 <script>
 'use strict';
