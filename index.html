@@ -3282,7 +3282,12 @@ function renderLog() {
             <div style="font-size:16px;font-weight:600;color:var(--ink);">${s.name || t.label}</div>
             <div style="font-size:12px;color:var(--mid);margin-top:2px;">
               ${s.duration ? s.duration + ' min' : ''}${s.duration && scoreStr ? ' · ' : ''}${scoreStr}
+              ${s.kcalActual ? ' · ' + s.kcalActual + ' kcal' : s.kcalEstimated ? ' · ~' + s.kcalEstimated + ' kcal est' : ''}
             </div>
+            ${s.intensityScore ? `<div style="display:inline-block;margin-top:5px;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;
+              background:${s.intensityScore>=120?'rgba(248,113,113,0.12)':s.intensityScore>=90?'rgba(52,201,154,0.12)':'rgba(251,191,36,0.12)'};
+              color:${s.intensityScore>=120?'var(--red)':s.intensityScore>=90?'var(--green)':'var(--amber)'};">
+              Intensity ${s.intensityScore}</div>` : ''}
             ${s.note ? `<div style="font-size:13px;color:var(--mid);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.note}</div>` : ''}
           </div>
           ${s.photo ? `<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;">
@@ -3320,7 +3325,7 @@ function setLogFilter(type) {
 // ── Log Entry Sheet ───────────────────────────────────────────────
 function openLogEntry(existingId) {
   const existing = existingId ? getSessionLog().find(s => s.id === existingId) : null;
-  let entry = existing ? Object.assign({}, existing) : {
+  let entry = existing ? JSON.parse(JSON.stringify(existing)) : {
     id: Date.now(),
     ts: Date.now(),
     type: 'wod',
@@ -3332,6 +3337,10 @@ function openLogEntry(existingId) {
     note: '',
     photo: null,
     tags: [],
+    workoutText: '',
+    exercises: [],
+    kcalEstimated: null,
+    kcalActual: null,
   };
 
   const ovl = document.createElement('div');
@@ -3340,13 +3349,25 @@ function openLogEntry(existingId) {
   function render() {
     const t = SESSION_TYPES.find(t => t.id === entry.type) || SESSION_TYPES[0];
     const scoreT = SCORE_TYPES.find(s => s.id === entry.scoreType);
+    const intensityScore = (entry.kcalActual && entry.kcalEstimated && entry.kcalEstimated > 0)
+      ? Math.round((entry.kcalActual / entry.kcalEstimated) * 100)
+      : null;
+    const intensityColor = !intensityScore ? 'var(--mid)'
+      : intensityScore >= 120 ? 'var(--red)'
+      : intensityScore >= 90  ? 'var(--green)'
+      : intensityScore >= 70  ? 'var(--amber)'
+      : 'var(--blue)';
+    const intensityLabel = !intensityScore ? ''
+      : intensityScore >= 120 ? 'Beast mode'
+      : intensityScore >= 90  ? 'On target'
+      : intensityScore >= 70  ? 'Moderate'
+      : 'Easy day';
 
     ovl.innerHTML = `<div style="background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;margin:0 auto;
-      max-height:92vh;overflow-y:auto;padding-bottom:calc(var(--safe-bottom)+24px);">
+      max-height:93vh;overflow-y:auto;padding-bottom:calc(var(--safe-bottom)+24px);">
 
       <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:16px auto 0;"></div>
 
-      <!-- Header -->
       <div style="display:flex;align-items:center;gap:12px;padding:16px 20px 12px;">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;flex:1;">
           ${existing ? 'Edit Session' : 'Log Session'}
@@ -3369,7 +3390,6 @@ function openLogEntry(existingId) {
             </button>`).join('')}
         </div>
 
-        <!-- Cardio subtype (only for cardio) -->
         ${entry.type === 'cardio' ? `
         <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Activity</div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;">
@@ -3382,29 +3402,122 @@ function openLogEntry(existingId) {
 
         <!-- Session name -->
         <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">
-          ${entry.type === 'wod' ? 'WOD Name / Description' : entry.type === 'cardio' ? 'Details (optional)' : 'Session Name'}
+          ${entry.type==='wod' ? 'WOD Name' : entry.type==='cardio' ? 'Details' : 'Session Name'}
         </div>
-        <input id="log-name" placeholder="${entry.type === 'wod' ? 'e.g. Fran, 21-15-9 Thrusters…' : 'e.g. Back squat focus'}"
-          value="${entry.name || ''}"
+        <input id="log-name" placeholder="${entry.type==='wod' ? 'e.g. Fran, 21-15-9…' : 'e.g. Back squat focus'}"
+          value="${(entry.name||'').replace(/"/g,'&quot;')}"
           style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);
-          font-size:15px;outline:none;box-sizing:border-box;margin-bottom:14px;"
-          oninput="entry_draft.name=this.value">
+          font-size:15px;outline:none;box-sizing:border-box;margin-bottom:14px;">
 
-        <!-- Duration -->
+        <!-- Duration + Date -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
           <div>
             <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Duration (min)</div>
-            <input id="log-duration" type="number" placeholder="45" value="${entry.duration || ''}"
-              style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:15px;outline:none;box-sizing:border-box;"
-              oninput="entry_draft.duration=this.value">
+            <input id="log-duration" type="number" placeholder="45" value="${entry.duration||''}"
+              style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:15px;outline:none;box-sizing:border-box;">
           </div>
           <div>
             <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Date</div>
             <input id="log-date" type="date" value="${toDateInput(entry.ts)}"
-              style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:14px;outline:none;box-sizing:border-box;"
-              oninput="entry_draft.dateInput=this.value">
+              style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:14px;outline:none;box-sizing:border-box;">
           </div>
         </div>
+
+        <!-- ── WOD BOARD PHOTO + AI EXTRACT ── -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">WOD Board</div>
+
+        ${entry.photo ? `
+        <div style="position:relative;margin-bottom:10px;">
+          <img src="${entry.photo}" style="width:100%;border-radius:13px;max-height:200px;object-fit:cover;">
+          <button onclick="_logClearPhoto()"
+            style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.65);border:none;cursor:pointer;color:#fff;font-size:14px;">×</button>
+        </div>
+        <button onclick="_logAnalysePhoto()" id="analyse-btn"
+          style="width:100%;padding:13px;background:var(--accent-light);border:1.5px solid var(--accent)40;border-radius:11px;
+          color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px;">
+          ✦ Extract workout from photo
+        </button>` : `
+        <div style="display:flex;gap:10px;margin-bottom:14px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;background:var(--card);
+            border:1.5px dashed var(--border2);border-radius:13px;cursor:pointer;color:var(--mid);font-size:13px;font-weight:600;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Camera
+            <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="_logPhotoCapture(this)">
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;background:var(--card);
+            border:1.5px dashed var(--border2);border-radius:13px;cursor:pointer;color:var(--mid);font-size:13px;font-weight:600;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Gallery
+            <input type="file" accept="image/*" style="display:none;" onchange="_logPhotoCapture(this)">
+          </label>
+        </div>`}
+
+        <div id="photo-ai-result"></div>
+
+        <!-- ── WORKOUT DESCRIPTION + AI PARSE ── -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Workout Description</div>
+        <textarea id="log-workout-text" placeholder="Describe your workout — e.g. 10 min row 2000m, 5 rounds of 10 devil press 20kg, 10 push-up rows, 10 weighted step-ups 24kg, 10 overhead press 40kg, 10 min boxing…" rows="4"
+          style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);
+          font-size:14px;outline:none;resize:none;box-sizing:border-box;margin-bottom:10px;line-height:1.55;">${(entry.workoutText||'').replace(/</g,'&lt;')}</textarea>
+        <button onclick="_logParseWorkout()" id="parse-btn"
+          style="width:100%;padding:13px;background:var(--accent-light);border:1.5px solid var(--accent)40;border-radius:11px;
+          color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px;">
+          ✦ Parse workout + estimate kCal
+        </button>
+
+        <!-- Parsed exercises display -->
+        ${entry.exercises && entry.exercises.length ? `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">Parsed Workout</div>
+          ${entry.exercises.map(ex => `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;color:var(--ink);">${ex.name}</div>
+                <div style="font-size:12px;color:var(--mid);">${ex.detail||''}</div>
+              </div>
+              ${ex.kcal ? `<div style="font-size:13px;font-weight:700;color:var(--accent);">~${ex.kcal} kcal</div>` : ''}
+            </div>`).join('')}
+          ${entry.kcalEstimated ? `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+            <div style="font-size:13px;font-weight:600;color:var(--ink);">Estimated total</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;color:var(--accent);">${entry.kcalEstimated} kcal</div>
+          </div>` : ''}
+        </div>` : ''}
+
+        <!-- ── APPLE WATCH / ACTUAL kCAL ── -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Actual kCal Burn</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:13px;color:var(--mid);margin-bottom:12px;line-height:1.5;">
+            Enter your Apple Watch / device reading after the session.
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <input id="log-kcal-actual" type="number" placeholder="e.g. 620"
+              value="${entry.kcalActual||''}"
+              style="flex:1;padding:13px;background:var(--card2);border:1.5px solid var(--border2);border-radius:10px;color:var(--ink);font-size:18px;font-weight:700;outline:none;box-sizing:border-box;">
+            <span style="font-size:13px;color:var(--mid);font-weight:600;white-space:nowrap;">kcal</span>
+          </div>
+          <!-- Shortcuts deep link -->
+          <a href="shortcuts://run-shortcut?name=ATLAS%20Log%20kCal"
+            style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card2);border:1px solid var(--border2);
+            border-radius:9px;color:var(--mid);font-size:12px;text-decoration:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Open ATLAS Shortcut on Apple Watch
+            <span style="margin-left:auto;font-size:10px;opacity:0.5;">→</span>
+          </a>
+        </div>
+
+        <!-- Intensity score -->
+        ${intensityScore !== null ? `
+        <div style="background:${intensityColor}12;border:1.5px solid ${intensityColor}35;border-radius:13px;padding:16px;margin-bottom:14px;text-align:center;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${intensityColor};margin-bottom:6px;">Intensity Score</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:56px;font-weight:900;color:${intensityColor};line-height:1;">${intensityScore}</div>
+          <div style="font-size:14px;color:${intensityColor};font-weight:600;margin-top:4px;">${intensityLabel}</div>
+          <div style="font-size:12px;color:var(--mid);margin-top:6px;">
+            ${entry.kcalActual} actual vs ${entry.kcalEstimated} estimated
+            ${intensityScore >= 110 ? ' · You went harder than expected' : intensityScore <= 80 ? ' · Easier than the numbers suggest' : ' · Right in the zone'}
+          </div>
+        </div>` : ''}
 
         <!-- Score type -->
         <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Score</div>
@@ -3416,11 +3529,9 @@ function openLogEntry(existingId) {
               font-size:12px;font-weight:600;cursor:pointer;">${st.label}</button>`).join('')}
         </div>
         ${entry.scoreType && entry.scoreType !== 'pass' ? `
-        <input id="log-score" placeholder="${scoreT ? scoreT.placeholder : ''}"
-          value="${entry.score || ''}"
+        <input id="log-score" placeholder="${scoreT ? scoreT.placeholder : ''}" value="${(entry.score||'').replace(/"/g,'&quot;')}"
           style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--accent)30;border-radius:11px;color:var(--ink);
-          font-size:15px;outline:none;box-sizing:border-box;margin-bottom:14px;"
-          oninput="entry_draft.score=this.value">` : ''}
+          font-size:15px;outline:none;box-sizing:border-box;margin-bottom:14px;">` : ''}
         ${entry.scoreType === 'pass' ? `
         <div style="display:flex;gap:10px;margin-bottom:14px;">
           <button onclick="_logSetPassFail('pass')"
@@ -3431,35 +3542,11 @@ function openLogEntry(existingId) {
             background:${entry.score==='fail'?'rgba(248,113,113,0.12)':'var(--card2)'};color:${entry.score==='fail'?'var(--red)':'var(--mid)'};font-size:15px;font-weight:700;cursor:pointer;">✗ Fail</button>
         </div>` : ''}
 
-        <!-- Note -->
+        <!-- Notes -->
         <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Notes</div>
-        <textarea id="log-note" placeholder="How did it go? Any PRs, scaling, how you felt…" rows="3"
+        <textarea id="log-note" placeholder="How did it go? PRs, scaling, how you felt…" rows="3"
           style="width:100%;padding:13px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);
-          font-size:14px;outline:none;resize:none;box-sizing:border-box;margin-bottom:16px;line-height:1.55;"
-          oninput="entry_draft.note=this.value">${entry.note || ''}</textarea>
-
-        <!-- Photo -->
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">WOD Board / Photo</div>
-        ${entry.photo ? `
-        <div style="position:relative;margin-bottom:14px;">
-          <img src="${entry.photo}" style="width:100%;border-radius:13px;max-height:220px;object-fit:cover;">
-          <button onclick="_logClearPhoto()"
-            style="position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;cursor:pointer;color:#fff;font-size:14px;">×</button>
-        </div>` : `
-        <div style="display:flex;gap:10px;margin-bottom:16px;">
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;background:var(--card);
-            border:1.5px dashed var(--border2);border-radius:13px;cursor:pointer;color:var(--mid);font-size:14px;font-weight:600;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Camera
-            <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="_logPhotoCapture(this)">
-          </label>
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;background:var(--card);
-            border:1.5px dashed var(--border2);border-radius:13px;cursor:pointer;color:var(--mid);font-size:14px;font-weight:600;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            Gallery
-            <input type="file" accept="image/*" style="display:none;" onchange="_logPhotoCapture(this)">
-          </label>
-        </div>`}
+          font-size:14px;outline:none;resize:none;box-sizing:border-box;margin-bottom:16px;line-height:1.55;">${(entry.note||'').replace(/</g,'&lt;')}</textarea>
 
         <!-- Tags -->
         <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:8px;">Tags</div>
@@ -3471,7 +3558,7 @@ function openLogEntry(existingId) {
               color:${(entry.tags||[]).includes(tag)?t.color:'var(--mid)'};font-size:12px;font-weight:600;cursor:pointer;">${tag}</button>`).join('')}
         </div>
 
-        <!-- Save -->
+        <!-- Save / Delete -->
         <div style="display:flex;gap:10px;">
           ${existing ? `<button onclick="_logDelete('${existing.id}')"
             style="padding:16px 20px;background:rgba(248,113,113,0.1);border:1.5px solid var(--red)30;border-radius:13px;color:var(--red);font-size:14px;font-weight:700;cursor:pointer;">Delete</button>` : ''}
@@ -3481,41 +3568,42 @@ function openLogEntry(existingId) {
             ${existing ? 'Save Changes' : 'Log Session'}
           </button>
         </div>
-
       </div>
     </div>`;
 
-    // Bind handlers to current entry (entry_draft kept for legacy)
-    window._logSetType = function(typeId) { entry.type=typeId; render(); };
-    window._logSetCardioType = function(ct) { entry.name=ct; render(); };
-    window._logSetScore = function(typeId) { entry.scoreType = entry.scoreType===typeId ? null : typeId; entry.score=''; render(); };
-    window._logSetPassFail = function(val) { entry.score=val; render(); };
-    window._logToggleTag = function(tag) {
-      if (!entry.tags) entry.tags=[];
-      entry.tags = entry.tags.includes(tag) ? entry.tags.filter(t=>t!==tag) : [...entry.tags, tag];
+    // ── Bind all handlers ─────────────────────────────────────────
+    window._logSetType       = t => { entry.type=t; render(); };
+    window._logSetCardioType = ct => { entry.name=ct; render(); };
+    window._logSetScore      = tid => { entry.scoreType = entry.scoreType===tid?null:tid; entry.score=''; render(); };
+    window._logSetPassFail   = v => { entry.score=v; render(); };
+    window._logClearPhoto    = () => { entry.photo=null; render(); };
+    window._logToggleTag     = tag => {
+      entry.tags = (entry.tags||[]).includes(tag) ? entry.tags.filter(t=>t!==tag) : [...(entry.tags||[]),tag];
       render();
     };
-    window._logClearPhoto = function() { entry.photo=null; render(); };
+    window._logDelete = id => {
+      if (!confirm('Delete this session?')) return;
+      saveSessionLog(getSessionLog().filter(s=>s.id!==id));
+      ovl.remove(); renderLog();
+    };
+
+    // ── Photo capture + AI extract ────────────────────────────────
     window._logPhotoCapture = function(input) {
       const file = input.files[0];
       if (!file) return;
-      // Check file size — cap at 2MB to keep localStorage manageable
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Photo too large — please use a smaller image (max 2MB).');
-        return;
-      }
+      const resultDiv = document.getElementById('photo-ai-result');
+      if (resultDiv) resultDiv.innerHTML = '<div style="font-size:13px;color:var(--mid);padding:8px 0;">Compressing…</div>';
       const reader = new FileReader();
       reader.onload = function(e) {
-        // Resize to max 800px wide via canvas to keep storage manageable
         const img = new Image();
         img.onload = function() {
-          const maxW = 800;
+          // Resize to 600px wide — enough for Claude vision to read text
+          const maxW = 600;
           const scale = img.width > maxW ? maxW / img.width : 1;
           const canvas = document.createElement('canvas');
           canvas.width  = Math.round(img.width  * scale);
           canvas.height = Math.round(img.height * scale);
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
           entry.photo = canvas.toDataURL('image/jpeg', 0.75);
           render();
         };
@@ -3523,27 +3611,126 @@ function openLogEntry(existingId) {
       };
       reader.readAsDataURL(file);
     };
+
+    window._logAnalysePhoto = async function() {
+      const key = localStorage.getItem('atlas_api_key');
+      const resultDiv = document.getElementById('photo-ai-result');
+      if (!key) {
+        if (resultDiv) resultDiv.innerHTML = apiKeyPrompt('_logAnalysePhoto()');
+        return;
+      }
+      if (resultDiv) resultDiv.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--mid);text-align:center;">Reading board…</div>';
+      const p = getProfile();
+      try {
+        const b64 = entry.photo.split(',')[1];
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':key,
+            'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 600,
+            system: `You are reading a CrossFit or gym whiteboard. Extract the workout and estimate kCal burned.
+The athlete: age ${p.age||40}, weight ${p.weight||80}kg.
+Return ONLY valid JSON, no markdown:
+{"name":"workout name","exercises":[{"name":"exercise","detail":"sets×reps or distance or duration","kcal":number}],"kcalEstimated":number,"notes":"any rx/scaling notes"}
+Estimate kcal honestly based on exercise type, volume, and athlete profile. Be conservative.`,
+            messages: [{
+              role:'user',
+              content: [{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+                        {type:'text',text:'Extract this workout and estimate kCal.'}]
+            }]
+          })
+        });
+        const d = await res.json();
+        if (d.error) throw new Error(d.error.message);
+        const text = d.content[0].text.replace(/```json|```/g,'').trim();
+        const parsed = JSON.parse(text);
+        entry.name = parsed.name || entry.name;
+        entry.exercises = parsed.exercises || [];
+        entry.kcalEstimated = parsed.kcalEstimated || null;
+        if (parsed.notes) entry.note = (entry.note ? entry.note+'\n' : '') + parsed.notes;
+        // Also populate workout text
+        entry.workoutText = entry.exercises.map(ex => ex.detail ? ex.name+' '+ex.detail : ex.name).join('\n');
+        if (resultDiv) resultDiv.innerHTML = '';
+        render();
+      } catch(e) {
+        if (resultDiv) resultDiv.innerHTML = `<div style="font-size:13px;color:var(--red);padding:8px 0;">Failed: ${e.message}</div>`;
+      }
+    };
+
+    // ── Free text workout parse ───────────────────────────────────
+    window._logParseWorkout = async function() {
+      const key = localStorage.getItem('atlas_api_key');
+      const textEl = document.getElementById('log-workout-text');
+      const parseBtn = document.getElementById('parse-btn');
+      const text = textEl ? textEl.value.trim() : '';
+      if (!text) return;
+      entry.workoutText = text;
+      if (!key) {
+        const ri = document.getElementById('photo-ai-result');
+        if (ri) ri.innerHTML = apiKeyPrompt('_logParseWorkout()');
+        return;
+      }
+      if (parseBtn) { parseBtn.textContent = 'Parsing…'; parseBtn.disabled = true; }
+      const p = getProfile();
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':key,
+            'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 800,
+            system: `Parse a workout description into structured data and estimate kCal burned.
+Athlete: age ${p.age||40}, weight ${p.weight||80}kg.
+Return ONLY valid JSON, no markdown:
+{"name":"short workout name","exercises":[{"name":"exercise name","detail":"sets×reps, distance, duration etc","kcal":number}],"kcalEstimated":number}
+For kcal per exercise: use MET values × weight × duration. Be specific and conservative.
+Cardio: row/bike/run use distance+time. Strength: estimate from sets×reps×weight. Boxing: use duration+intensity.`,
+            messages: [{role:'user', content: text}]
+          })
+        });
+        const d = await res.json();
+        if (d.error) throw new Error(d.error.message);
+        const raw = d.content[0].text.replace(/```json|```/g,'').trim();
+        const parsed = JSON.parse(raw);
+        entry.exercises = parsed.exercises || [];
+        entry.kcalEstimated = parsed.kcalEstimated || null;
+        if (parsed.name && !entry.name) entry.name = parsed.name;
+        render();
+      } catch(e) {
+        if (parseBtn) { parseBtn.textContent = '✦ Parse workout + estimate kCal'; parseBtn.disabled = false; }
+        alert('Parse failed: ' + e.message);
+      }
+    };
+
+    // ── Save ──────────────────────────────────────────────────────
     window._logSave = function() {
-      // Read text fields from live DOM (other fields already on entry via handlers)
-      const nameEl  = document.getElementById('log-name');
-      const durEl   = document.getElementById('log-duration');
-      const scoreEl = document.getElementById('log-score');
-      const noteEl  = document.getElementById('log-note');
-      const dateEl  = document.getElementById('log-date');
-      if (nameEl)  entry.name     = nameEl.value.trim();
-      if (durEl)   entry.duration = durEl.value ? Number(durEl.value) : null;
+      const nameEl    = document.getElementById('log-name');
+      const durEl     = document.getElementById('log-duration');
+      const scoreEl   = document.getElementById('log-score');
+      const noteEl    = document.getElementById('log-note');
+      const dateEl    = document.getElementById('log-date');
+      const wtEl      = document.getElementById('log-workout-text');
+      const kcalActEl = document.getElementById('log-kcal-actual');
+      if (nameEl)    entry.name        = nameEl.value.trim();
+      if (durEl)     entry.duration    = durEl.value ? Number(durEl.value) : null;
       if (scoreEl && entry.scoreType && entry.scoreType !== 'pass')
-                   entry.score    = scoreEl.value.trim();
-      if (noteEl)  entry.note     = noteEl.value.trim();
+                     entry.score       = scoreEl.value.trim();
+      if (noteEl)    entry.note        = noteEl.value.trim();
+      if (wtEl)      entry.workoutText = wtEl.value.trim();
+      if (kcalActEl && kcalActEl.value) entry.kcalActual = Number(kcalActEl.value);
       if (dateEl && dateEl.value) {
         const d = new Date(dateEl.value + 'T12:00:00');
         entry.date = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
         entry.ts   = d.getTime();
       }
-      // entry.photo, entry.type, entry.tags, entry.scoreType
-      // are all already correct on the entry object — do NOT overwrite them
-      if (!entry.ts) entry.ts = Date.now();
+      if (!entry.ts)   entry.ts   = Date.now();
       if (!entry.date) entry.date = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+      // Compute intensity score for storage
+      if (entry.kcalActual && entry.kcalEstimated)
+        entry.intensityScore = Math.round((entry.kcalActual / entry.kcalEstimated) * 100);
       const log = getSessionLog().filter(s => s.id !== entry.id);
       log.unshift(entry);
       if (log.length > 200) log.pop();
@@ -3551,13 +3738,7 @@ function openLogEntry(existingId) {
       ovl.remove();
       renderLog();
     };
-    window._logDelete = function(id) {
-      if (!confirm('Delete this session?')) return;
-      saveSessionLog(getSessionLog().filter(s => s.id !== id));
-      ovl.remove();
-      renderLog();
-    };
-  }
+  } // end render()
 
   render();
   ovl.onclick = e => { if (e.target === ovl) ovl.remove(); };
