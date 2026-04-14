@@ -150,7 +150,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 .canyou-no{flex:1;padding:16px;background:var(--card2);color:var(--ink2);border:1.5px solid var(--border2);border-radius:13px;font-size:17px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;}
 
 /* ── TODAY BLOCKS ────────────────────────────────────────────── */
-.today-block{background:var(--card);border:1px solid var(--border);border-radius:20px;margin-bottom:14px;overflow:hidden;transition:all 0.2s;}
+.today-block{background:var(--card);border:1.5px solid var(--border);border-radius:20px;margin-bottom:14px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s;}
 .today-block-header{display:flex;align-items:center;gap:16px;padding:20px;cursor:pointer;}
 .today-block-num{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0;font-family:'Barlow Condensed',sans-serif;}
 .today-block-title{font-size:18px;font-weight:700;color:var(--ink);}
@@ -2075,8 +2075,23 @@ function setTodayWorkout(type) {
 }
 
 function toggleBlock(name) {
- const body = document.getElementById('body-' + name);
- if (body) body.classList.toggle('hidden');
+  const body  = document.getElementById('body-' + name);
+  const block = document.getElementById('block-' + name);
+  if (!body) return;
+  const isOpen = body.classList.contains('hidden');
+  body.classList.toggle('hidden');
+  // Apply accent border + glow when expanded
+  const colors = {
+    warmup:   'var(--accent)',
+    prep:     'var(--knee)',
+    workout:  'var(--accent)',
+    cooldown: 'var(--shoulder)',
+  };
+  const col = colors[name] || 'var(--accent)';
+  if (block) {
+    block.style.borderColor  = isOpen ? col : 'var(--border)';
+    block.style.boxShadow    = isOpen ? '0 4px 24px ' + col + '22' : 'none';
+  }
 }
 
 function markBlockDone(name) {
@@ -3628,7 +3643,7 @@ function openLogEntry(existingId) {
           headers:{'Content-Type':'application/json','x-api-key':key,
             'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-sonnet-4-6',
             max_tokens: 600,
             system: `You are reading a CrossFit or gym whiteboard. Extract the workout and estimate kCal burned.
 The athlete: age ${p.age||40}, weight ${p.weight||80}kg.
@@ -3655,7 +3670,12 @@ Estimate kcal honestly based on exercise type, volume, and athlete profile. Be c
         if (resultDiv) resultDiv.innerHTML = '';
         render();
       } catch(e) {
-        if (resultDiv) resultDiv.innerHTML = `<div style="font-size:13px;color:var(--red);padding:8px 0;">Failed: ${e.message}</div>`;
+        const rd = document.getElementById('photo-ai-result');
+        const msg = `<div style="padding:12px;background:rgba(248,113,113,0.1);border:1px solid var(--red)30;border-radius:10px;font-size:13px;color:var(--red);margin-bottom:10px;">
+          ✗ ${e.message || 'Request failed — check your API key in Settings.'}
+        </div>`;
+        if (rd) rd.innerHTML = msg;
+        else { const t=document.createElement('div'); t.style.cssText='position:fixed;bottom:100px;left:20px;right:20px;z-index:999;'; t.innerHTML=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),5000); }
       }
     };
 
@@ -3680,7 +3700,7 @@ Estimate kcal honestly based on exercise type, volume, and athlete profile. Be c
           headers:{'Content-Type':'application/json','x-api-key':key,
             'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-sonnet-4-6',
             max_tokens: 800,
             system: `Parse a workout description into structured data and estimate kCal burned.
 Athlete: age ${p.age||40}, weight ${p.weight||80}kg.
@@ -3700,8 +3720,13 @@ Cardio: row/bike/run use distance+time. Strength: estimate from sets×reps×weig
         if (parsed.name && !entry.name) entry.name = parsed.name;
         render();
       } catch(e) {
-        if (parseBtn) { parseBtn.textContent = '✦ Parse workout + estimate kCal'; parseBtn.disabled = false; }
-        alert('Parse failed: ' + e.message);
+        const pb = document.getElementById('parse-btn');
+        if (pb) { pb.textContent = '✦ Parse workout + estimate kCal'; pb.disabled = false; }
+        const rd = document.getElementById('photo-ai-result');
+        const msg = `<div style="padding:12px;background:rgba(248,113,113,0.1);border:1px solid var(--red)30;border-radius:10px;font-size:13px;color:var(--red);margin-bottom:10px;">
+          ✗ ${e.message || 'Request failed — check your API key in Settings.'}
+        </div>`;
+        if (rd) rd.innerHTML = msg;
       }
     };
 
