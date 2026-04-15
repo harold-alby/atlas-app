@@ -29,15 +29,15 @@
   --accent:       #c9a84c;
   --accent-glow:  rgba(201,168,76,0.25);
   --accent-light: rgba(201,168,76,0.1);
-  --blue:         #6aa3f5;
-  --purple:       #b39dfa;
-  --green:        #34c99a;
-  --red:          #f87171;
-  --teal:         #4ECDC4;
-  --amber:        #fbbf24;
-  --knee:         #4ECDC4;
-  --elbow:        #F7B731;
-  --shoulder:     #b39dfa;
+  --blue:         #7b9fc4;
+  --purple:       #9b8fc4;
+  --green:        #5aab8e;
+  --red:          #c47a6a;
+  --teal:         #5aada6;
+  --amber:        #d4a843;
+  --knee:         #5aada6;
+  --elbow:        #c9993a;
+  --shoulder:     #9b8fc4;
   --mobility:     #c9a84c;
   --safe-top:    env(safe-area-inset-top, 44px);
   --safe-bottom: env(safe-area-inset-bottom, 20px);
@@ -552,25 +552,33 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 
  <div class="section-label">Workout type</div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
- <button class="card" style="cursor:pointer;text-align:left;border:none;" onclick="startWorkout('skills')">
- <div class="wt-icon" style="font-size:22px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--accent);margin-bottom:6px;letter-spacing:-0.02em;">SKILL</div>
- <div style="font-size:15px;font-weight:700;color:var(--ink);">Skill Session</div>
- <div style="font-size:14px;color:var(--mid);margin-top:2px;">Focus skills + progressions</div>
+ <button class="card" style="cursor:pointer;text-align:left;border:none;display:flex;flex-direction:column;" onclick="startWorkout('skills')">
+ <div style="height:32px;display:flex;align-items:flex-end;margin-bottom:8px;">
+   <span style="font-size:22px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--accent);letter-spacing:-0.02em;line-height:1;">SKILL</span>
+ </div>
+ <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;">Skill Session</div>
+ <div style="font-size:13px;color:var(--mid);">Skills + progressions</div>
  </button>
- <button class="card" style="cursor:pointer;text-align:left;border:none;" onclick="startWorkout('strength')">
- <div class="wt-icon" style="font-size:22px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--blue);margin-bottom:6px;">STR</div>
- <div style="font-size:15px;font-weight:700;color:var(--ink);">Strength</div>
- <div style="font-size:14px;color:var(--mid);margin-top:2px;">Push · pull · compress</div>
+ <button class="card" style="cursor:pointer;text-align:left;border:none;display:flex;flex-direction:column;" onclick="startWorkout('strength')">
+ <div style="height:32px;display:flex;align-items:flex-end;margin-bottom:8px;">
+   <span style="font-size:22px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--blue);line-height:1;">STR</span>
+ </div>
+ <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;">Strength</div>
+ <div style="font-size:13px;color:var(--mid);">Push · pull · compress</div>
  </button>
- <button class="card" style="cursor:pointer;text-align:left;border:none;" onclick="startWorkout('conditioning')">
- <div class="wt-icon" style="font-size:22px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--red);margin-bottom:6px;">COND</div>
- <div style="font-size:15px;font-weight:700;color:var(--ink);">Conditioning</div>
- <div style="font-size:14px;color:var(--mid);margin-top:2px;">AMRAP · intervals</div>
+ <button class="card" style="cursor:pointer;text-align:left;border:none;display:flex;flex-direction:column;" onclick="startWorkout('conditioning')">
+ <div style="height:32px;display:flex;align-items:flex-end;margin-bottom:8px;">
+   <span style="font-size:22px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--red);line-height:1;">COND</span>
+ </div>
+ <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;">Conditioning</div>
+ <div style="font-size:13px;color:var(--mid);">AMRAP · intervals</div>
  </button>
- <button class="card" style="cursor:pointer;text-align:left;border:none;" onclick="startWorkout('handstand')">
- <div class="wt-icon" style="font-size:22px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--purple);margin-bottom:6px;">HS</div>
- <div style="font-size:15px;font-weight:700;color:var(--ink);">Handstand</div>
- <div style="font-size:14px;color:var(--mid);margin-top:2px;">HS skill progression</div>
+ <button class="card" style="cursor:pointer;text-align:left;border:none;display:flex;flex-direction:column;" onclick="startWorkout('handstand')">
+ <div style="height:32px;display:flex;align-items:flex-end;margin-bottom:8px;">
+   <span style="font-size:22px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--purple);line-height:1;">HS</span>
+ </div>
+ <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;">Handstand</div>
+ <div style="font-size:13px;color:var(--mid);">HS skill progression</div>
  </button>
  </div>
 
@@ -835,9 +843,9 @@ function saveState() {
 // ═══════════════════════════════════════════════════════════════════════
 function getPainBand(p) { return p <= 2 ? 'low' : p <= 4 ? 'mid' : 'high'; }
 const PAIN_CFG = {
- low: { label:'Good day', color:'#4ECDC4', bg:'#f0fdfb', desc:'Full program' },
- mid: { label:'3–4 / 10', color:'#F7B731', bg:'#fffbf0', desc:'Modified load' },
- high: { label:'5+ / 10', color:'#FF6B6B', bg:'#fff5f5', desc:'Unload only' },
+ low: { label:'Good day', color:'#5aada6', bg:'#f0fdfb', desc:'Full program' },
+ mid: { label:'3–4 / 10', color:'#c9993a', bg:'#fffbf0', desc:'Modified load' },
+ high: { label:'5+ / 10', color:'#b86a5e', bg:'#fff5f5', desc:'Unload only' },
 };
 const TAG_C = {
  passive: { bg:'#e8f4f8', text:'#2471a3' },
@@ -858,7 +866,7 @@ const BULLETPROOF_ZONES = [
   {
     id: 'thoracic',
     label: 'Thoracic Spine',
-    color: '#6366f1',
+    color: '#6b6ba8',
     icon: '🦴',
     why: 'The most locked-up region in athletes. Poor T-spine mobility loads the lower back and limits overhead range.',
     exercises: [
@@ -885,7 +893,7 @@ const BULLETPROOF_ZONES = [
   {
     id: 'shoulders',
     label: 'Shoulders',
-    color: '#8b5cf6',
+    color: '#7b6aa8',
     icon: '💪',
     why: 'Ring work and overhead pressing demand full shoulder CARs. Posterior capsule tightness limits pressing and pulling both.',
     exercises: [
@@ -921,7 +929,7 @@ const BULLETPROOF_ZONES = [
   {
     id: 'wrists',
     label: 'Wrists',
-    color: '#f59e0b',
+    color: '#c4883a',
     icon: '✋',
     why: 'Handstand and ring work load wrists in full extension. They need progressive conditioning — not just stretching.',
     exercises: [
@@ -956,7 +964,7 @@ const BULLETPROOF_ZONES = [
   {
     id: 'hips',
     label: 'Hips',
-    color: '#10b981',
+    color: '#4a9b7a',
     icon: '🔄',
     why: 'Hip mobility directly protects the lower back and knee. Tight hip flexors and restricted internal rotation are the root cause of most lower back issues in athletes.',
     exercises: [
@@ -991,7 +999,7 @@ const BULLETPROOF_ZONES = [
   {
     id: 'lower-back',
     label: 'Lower Back',
-    color: '#ef4444',
+    color: '#b86a5e',
     icon: '🏔',
     why: 'The lumbar spine needs decompression and controlled movement — not stretching into end range. Most lower back tightness is a hip and T-spine mobility problem in disguise.',
     exercises: [
@@ -1086,73 +1094,73 @@ const SHOULDER_LIB = {
 // ─── WEEKLY SCHEDULES ─────────────────────────────────────────────────
 const KNEE_WEEKLY = {
  1:[
- {day:'Monday', label:'MON', theme:'Decompress', color:'#4ECDC4', activation:'vmoWallSit', focus:['ninetyNinety','calfRaise']},
- {day:'Tuesday', label:'TUE', theme:'Activate', color:'#48CAE4', activation:'gluteBridge', focus:['tke','hipCAR']},
- {day:'Wednesday',label:'WED', theme:'Mobility', color:'#4ECDC4', activation:'vmoWallSit', focus:['ninetyNinety','calfRaise']},
- {day:'Thursday', label:'THU', theme:'Strength', color:'#48CAE4', activation:'gluteBridge', focus:['lateralBandWalk','stepUp']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#4ECDC4', activation:'vmoWallSit', focus:['tke','spanishSquat']},
+ {day:'Monday', label:'MON', theme:'Decompress', color:'#5aada6', activation:'vmoWallSit', focus:['ninetyNinety','calfRaise']},
+ {day:'Tuesday', label:'TUE', theme:'Activate', color:'#5a9eb8', activation:'gluteBridge', focus:['tke','hipCAR']},
+ {day:'Wednesday',label:'WED', theme:'Mobility', color:'#5aada6', activation:'vmoWallSit', focus:['ninetyNinety','calfRaise']},
+ {day:'Thursday', label:'THU', theme:'Strength', color:'#5a9eb8', activation:'gluteBridge', focus:['lateralBandWalk','stepUp']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#5aada6', activation:'vmoWallSit', focus:['tke','spanishSquat']},
  ],
  2:[
- {day:'Monday', label:'MON', theme:'Stability', color:'#F7B731', activation:'vmoWallSit', focus:['tke','lateralBandWalk']},
- {day:'Tuesday', label:'TUE', theme:'Load', color:'#F9A825', activation:'gluteBridge', focus:['spanishSquat','ninetyNinety']},
- {day:'Wednesday',label:'WED', theme:'Strength', color:'#F7B731', activation:'vmoWallSit', focus:['stepUp','tke']},
- {day:'Thursday', label:'THU', theme:'Mobility', color:'#F9A825', activation:'gluteBridge', focus:['hipCAR','ninetyNinety']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#F7B731', activation:'vmoWallSit', focus:['lateralBandWalk','spanishSquat']},
+ {day:'Monday', label:'MON', theme:'Stability', color:'#c9993a', activation:'vmoWallSit', focus:['tke','lateralBandWalk']},
+ {day:'Tuesday', label:'TUE', theme:'Load', color:'#c4883a', activation:'gluteBridge', focus:['spanishSquat','ninetyNinety']},
+ {day:'Wednesday',label:'WED', theme:'Strength', color:'#c9993a', activation:'vmoWallSit', focus:['stepUp','tke']},
+ {day:'Thursday', label:'THU', theme:'Mobility', color:'#c4883a', activation:'gluteBridge', focus:['hipCAR','ninetyNinety']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#c9993a', activation:'vmoWallSit', focus:['lateralBandWalk','spanishSquat']},
  ],
  3:[
- {day:'Monday', label:'MON', theme:'Sport Prep', color:'#FF6B6B', activation:'gluteBridge', focus:['tke','lateralBandWalk']},
- {day:'Tuesday', label:'TUE', theme:'Strength', color:'#E55A5A', activation:'vmoWallSit', focus:['spanishSquat','stepUp']},
- {day:'Wednesday',label:'WED', theme:'Control', color:'#FF6B6B', activation:'gluteBridge', focus:['calfRaise','hipCAR']},
- {day:'Thursday', label:'THU', theme:'Power', color:'#E55A5A', activation:'vmoWallSit', focus:['tke','lateralBandWalk']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#FF6B6B', activation:'gluteBridge', focus:['spanishSquat','calfRaise']},
+ {day:'Monday', label:'MON', theme:'Sport Prep', color:'#b86a5e', activation:'gluteBridge', focus:['tke','lateralBandWalk']},
+ {day:'Tuesday', label:'TUE', theme:'Strength', color:'#a85a50', activation:'vmoWallSit', focus:['spanishSquat','stepUp']},
+ {day:'Wednesday',label:'WED', theme:'Control', color:'#b86a5e', activation:'gluteBridge', focus:['calfRaise','hipCAR']},
+ {day:'Thursday', label:'THU', theme:'Power', color:'#a85a50', activation:'vmoWallSit', focus:['tke','lateralBandWalk']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#b86a5e', activation:'gluteBridge', focus:['spanishSquat','calfRaise']},
  ],
 };
 
 const ELBOW_WEEKLY = {
  1:[
- {day:'Monday', label:'MON', theme:'Stretch', color:'#F7B731', activation:'wristFlexorStretch', focus:['wristExtensorStretch','wristCircles']},
- {day:'Tuesday', label:'TUE', theme:'Mobility', color:'#F9A825', activation:'fingerTendonGlide', focus:['pronationSupination','wristCircles']},
- {day:'Wednesday',label:'WED', theme:'Load', color:'#F7B731', activation:'wristFlexorStretch', focus:['eccentricWristCurl','wristCircles']},
- {day:'Thursday', label:'THU', theme:'Stretch', color:'#F9A825', activation:'fingerTendonGlide', focus:['wristExtensorStretch','pronationSupination']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#F7B731', activation:'wristFlexorStretch', focus:['eccentricWristCurl','pronationSupination']},
+ {day:'Monday', label:'MON', theme:'Stretch', color:'#c9993a', activation:'wristFlexorStretch', focus:['wristExtensorStretch','wristCircles']},
+ {day:'Tuesday', label:'TUE', theme:'Mobility', color:'#c4883a', activation:'fingerTendonGlide', focus:['pronationSupination','wristCircles']},
+ {day:'Wednesday',label:'WED', theme:'Load', color:'#c9993a', activation:'wristFlexorStretch', focus:['eccentricWristCurl','wristCircles']},
+ {day:'Thursday', label:'THU', theme:'Stretch', color:'#c4883a', activation:'fingerTendonGlide', focus:['wristExtensorStretch','pronationSupination']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#c9993a', activation:'wristFlexorStretch', focus:['eccentricWristCurl','pronationSupination']},
  ],
  2:[
- {day:'Monday', label:'MON', theme:'Strength', color:'#F7B731', activation:'bandPullApart', focus:['eccentricWristCurl','eccentricWristExtension']},
- {day:'Tuesday', label:'TUE', theme:'Mobility', color:'#F9A825', activation:'fingerTendonGlide', focus:['pronationSupination','wristCircles']},
- {day:'Wednesday',label:'WED', theme:'Load', color:'#F7B731', activation:'bandPullApart', focus:['eccentricWristExtension','wristFlexorStretch']},
- {day:'Thursday', label:'THU', theme:'Strength', color:'#F9A825', activation:'wristFlexorStretch', focus:['eccentricWristCurl','pronationSupination']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#F7B731', activation:'bandPullApart', focus:['eccentricWristExtension','wristCircles']},
+ {day:'Monday', label:'MON', theme:'Strength', color:'#c9993a', activation:'bandPullApart', focus:['eccentricWristCurl','eccentricWristExtension']},
+ {day:'Tuesday', label:'TUE', theme:'Mobility', color:'#c4883a', activation:'fingerTendonGlide', focus:['pronationSupination','wristCircles']},
+ {day:'Wednesday',label:'WED', theme:'Load', color:'#c9993a', activation:'bandPullApart', focus:['eccentricWristExtension','wristFlexorStretch']},
+ {day:'Thursday', label:'THU', theme:'Strength', color:'#c4883a', activation:'wristFlexorStretch', focus:['eccentricWristCurl','pronationSupination']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#c9993a', activation:'bandPullApart', focus:['eccentricWristExtension','wristCircles']},
  ],
  3:[
- {day:'Monday', label:'MON', theme:'Load', color:'#F7B731', activation:'bandPullApart', focus:['eccentricWristCurl','pronationSupination']},
- {day:'Tuesday', label:'TUE', theme:'Grip', color:'#F9A825', activation:'fingerTendonGlide', focus:['eccentricWristExtension','wristCircles']},
- {day:'Wednesday',label:'WED', theme:'Strength', color:'#F7B731', activation:'bandPullApart', focus:['eccentricWristCurl','eccentricWristExtension']},
- {day:'Thursday', label:'THU', theme:'Mobility', color:'#F9A825', activation:'wristCircles', focus:['pronationSupination','fingerTendonGlide']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#F7B731', activation:'bandPullApart', focus:['eccentricWristExtension','pronationSupination']},
+ {day:'Monday', label:'MON', theme:'Load', color:'#c9993a', activation:'bandPullApart', focus:['eccentricWristCurl','pronationSupination']},
+ {day:'Tuesday', label:'TUE', theme:'Grip', color:'#c4883a', activation:'fingerTendonGlide', focus:['eccentricWristExtension','wristCircles']},
+ {day:'Wednesday',label:'WED', theme:'Strength', color:'#c9993a', activation:'bandPullApart', focus:['eccentricWristCurl','eccentricWristExtension']},
+ {day:'Thursday', label:'THU', theme:'Mobility', color:'#c4883a', activation:'wristCircles', focus:['pronationSupination','fingerTendonGlide']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#c9993a', activation:'bandPullApart', focus:['eccentricWristExtension','pronationSupination']},
  ],
 };
 
 const SHOULDER_WEEKLY = {
  1:[
- {day:'Monday', label:'MON', theme:'Decompress', color:'#A78BFA', activation:'pendulum', focus:['shoulderCAR','sleepersStretch']},
- {day:'Tuesday', label:'TUE', theme:'Activate', color:'#C084FC', activation:'wallSlide', focus:['crossBodyStretch','bandExternalRotation']},
- {day:'Wednesday',label:'WED', theme:'Stretch', color:'#A78BFA', activation:'pendulum', focus:['shoulderCAR','sleepersStretch']},
- {day:'Thursday', label:'THU', theme:'Mobility', color:'#C084FC', activation:'shoulderCAR', focus:['crossBodyStretch','wallSlide']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#A78BFA', activation:'pendulum', focus:['bandExternalRotation','shoulderCAR']},
+ {day:'Monday', label:'MON', theme:'Decompress', color:'#9b8fc4', activation:'pendulum', focus:['shoulderCAR','sleepersStretch']},
+ {day:'Tuesday', label:'TUE', theme:'Activate', color:'#8a7ab8', activation:'wallSlide', focus:['crossBodyStretch','bandExternalRotation']},
+ {day:'Wednesday',label:'WED', theme:'Stretch', color:'#9b8fc4', activation:'pendulum', focus:['shoulderCAR','sleepersStretch']},
+ {day:'Thursday', label:'THU', theme:'Mobility', color:'#8a7ab8', activation:'shoulderCAR', focus:['crossBodyStretch','wallSlide']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#9b8fc4', activation:'pendulum', focus:['bandExternalRotation','shoulderCAR']},
  ],
  2:[
- {day:'Monday', label:'MON', theme:'Strength', color:'#A78BFA', activation:'facePull', focus:['bandExternalRotation','ytw']},
- {day:'Tuesday', label:'TUE', theme:'Mobility', color:'#C084FC', activation:'shoulderCAR', focus:['sleepersStretch','crossBodyStretch']},
- {day:'Wednesday',label:'WED', theme:'Stability', color:'#A78BFA', activation:'wallSlide', focus:['ytw','bandExternalRotation']},
- {day:'Thursday', label:'THU', theme:'Strength', color:'#C084FC', activation:'facePull', focus:['crossBodyStretch','ytw']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#A78BFA', activation:'facePull', focus:['ytw','shoulderCAR']},
+ {day:'Monday', label:'MON', theme:'Strength', color:'#9b8fc4', activation:'facePull', focus:['bandExternalRotation','ytw']},
+ {day:'Tuesday', label:'TUE', theme:'Mobility', color:'#8a7ab8', activation:'shoulderCAR', focus:['sleepersStretch','crossBodyStretch']},
+ {day:'Wednesday',label:'WED', theme:'Stability', color:'#9b8fc4', activation:'wallSlide', focus:['ytw','bandExternalRotation']},
+ {day:'Thursday', label:'THU', theme:'Strength', color:'#8a7ab8', activation:'facePull', focus:['crossBodyStretch','ytw']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#9b8fc4', activation:'facePull', focus:['ytw','shoulderCAR']},
  ],
  3:[
- {day:'Monday', label:'MON', theme:'Load', color:'#A78BFA', activation:'facePull', focus:['ytw','bandExternalRotation']},
- {day:'Tuesday', label:'TUE', theme:'Overhead', color:'#C084FC', activation:'wallSlide', focus:['shoulderCAR','sleepersStretch']},
- {day:'Wednesday',label:'WED', theme:'Strength', color:'#A78BFA', activation:'facePull', focus:['bandExternalRotation','ytw']},
- {day:'Thursday', label:'THU', theme:'Mobility', color:'#C084FC', activation:'shoulderCAR', focus:['sleepersStretch','crossBodyStretch']},
- {day:'Friday', label:'FRI', theme:'Full Flow', color:'#A78BFA', activation:'facePull', focus:['ytw','wallSlide']},
+ {day:'Monday', label:'MON', theme:'Load', color:'#9b8fc4', activation:'facePull', focus:['ytw','bandExternalRotation']},
+ {day:'Tuesday', label:'TUE', theme:'Overhead', color:'#8a7ab8', activation:'wallSlide', focus:['shoulderCAR','sleepersStretch']},
+ {day:'Wednesday',label:'WED', theme:'Strength', color:'#9b8fc4', activation:'facePull', focus:['bandExternalRotation','ytw']},
+ {day:'Thursday', label:'THU', theme:'Mobility', color:'#8a7ab8', activation:'shoulderCAR', focus:['sleepersStretch','crossBodyStretch']},
+ {day:'Friday', label:'FRI', theme:'Full Flow', color:'#9b8fc4', activation:'facePull', focus:['ytw','wallSlide']},
  ],
 };
 
@@ -1162,22 +1170,22 @@ const SHOULDER_WEEKLY = {
 const SKILL_TRACKS = [
   // Calisthenics
   { id:'muscle-up',   label:'Ring MU',      color:'#c9a84c', group:'Calisthenics' },
-  { id:'handstand',   label:'Handstand',    color:'#a78bfa', group:'Calisthenics' },
-  { id:'hs-walk',     label:'HS Walk',      color:'#60a5fa', group:'Calisthenics' },
-  { id:'butterfly',   label:'Butterfly',    color:'#34d399', group:'Calisthenics' },
+  { id:'handstand',   label:'Handstand',    color:'#8a7ab8', group:'Calisthenics' },
+  { id:'hs-walk',     label:'HS Walk',      color:'#6490b8', group:'Calisthenics' },
+  { id:'butterfly',   label:'Butterfly',    color:'#5aab8e', group:'Calisthenics' },
   // Gymnastics Strength
-  { id:'planche',     label:'Planche',      color:'#f87171', group:'Gymnastics'   },
-  { id:'front-lever', label:'Front Lever',  color:'#fb923c', group:'Gymnastics'   },
-  { id:'back-lever',  label:'Back Lever',   color:'#e879f9', group:'Gymnastics'   },
+  { id:'planche',     label:'Planche',      color:'#b86a5e', group:'Gymnastics'   },
+  { id:'front-lever', label:'Front Lever',  color:'#c47a45', group:'Gymnastics'   },
+  { id:'back-lever',  label:'Back Lever',   color:'#a06aab', group:'Gymnastics'   },
   // CrossFit
-  { id:'crossfit',    label:'CF Skills',    color:'#38bdf8', group:'CrossFit'     },
+  { id:'crossfit',    label:'CF Skills',    color:'#6497b8', group:'CrossFit'     },
   // Strength
-  { id:'strength',    label:'Strength',     color:'#a3e635', group:'Strength'     },
+  { id:'strength',    label:'Strength',     color:'#7a9e52', group:'Strength'     },
   // Elite tracks (unlocked via prerequisites)
-  { id:'iron-cross',   label:'Iron Cross',   color:'#ef4444', group:'Elite Rings'    },
-  { id:'victorian',    label:'Victorian',    color:'#dc2626', group:'Elite Rings'    },
-  { id:'maltese',      label:'Maltese',      color:'#b91c1c', group:'Elite Rings'    },
-  { id:'one-arm-pu',   label:'One-Arm PU',   color:'#f59e0b', group:'Elite Strength' },
+  { id:'iron-cross',   label:'Iron Cross',   color:'#b86a5e', group:'Elite Rings'    },
+  { id:'victorian',    label:'Victorian',    color:'#a85a50', group:'Elite Rings'    },
+  { id:'maltese',      label:'Maltese',      color:'#955048', group:'Elite Rings'    },
+  { id:'one-arm-pu',   label:'One-Arm PU',   color:'#c4883a', group:'Elite Strength' },
 ];
 
 const SKILL_TREES = {
@@ -2440,11 +2448,11 @@ function renderToday() {
  `${days[now.getDay()].toUpperCase()} · ${now.getDate()} ${months[now.getMonth()].toUpperCase()} ${now.getFullYear()}`;
 
  // Warm-up exercises
- const wuHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#FB923C', 0)).join('');
+ const wuHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#c47a45', 0)).join('');
  document.getElementById('warmup-exercises').innerHTML = wuHTML;
 
  // Cool-down exercises
- const cdHTML = COOL_DOWN.map(ex => renderExCard(ex, '#A78BFA', 0)).join('');
+ const cdHTML = COOL_DOWN.map(ex => renderExCard(ex, '#9b8fc4', 0)).join('');
  document.getElementById('cooldown-exercises').innerHTML = cdHTML;
 
  // Workout preview
@@ -2535,19 +2543,19 @@ function logSession() {
 // REHAB MODULE SYSTEM
 // ═══════════════════════════════════════════════════════════════════════
 const REHAB_MODULES = {
- knee: { title:'Knee Rehab', icon:'', color:'#4ECDC4', lib:KNEE_LIB, weekly:KNEE_WEEKLY, phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–12'}, disclaimer:'Grade IV chondropathy + meniscal extrusion. Stop any exercise at >2/10 pain or locking.' },
- elbow: { title:'Elbow Rehab', icon:'', color:'#F7B731', lib:ELBOW_LIB, weekly:ELBOW_WEEKLY, phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–10'}, disclaimer:'Bilateral medial epicondyle tendinopathy. No forced gripping under load. False grip gated to Phase 3.' },
- shoulder: { title:'Shoulder Rehab', icon:'', color:'#A78BFA', lib:SHOULDER_LIB, weekly:SHOULDER_WEEKLY, phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–10'}, disclaimer:'Stop at any pinching above 2/10 in overhead range.' },
- mobility: { title:'Mobility Warmup', icon:'', color:'#FB923C', lib:null, weekly:null, phases:{}, disclaimer:null },
-  bulletproof: { title:'Bulletproof Mobility', icon:'🛡', color:'#6366f1', lib:null, weekly:null, phases:{}, disclaimer:null },
+ knee: { title:'Knee Rehab', icon:'', color:'#5aada6', lib:KNEE_LIB, weekly:KNEE_WEEKLY, phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–12'}, disclaimer:'Grade IV chondropathy + meniscal extrusion. Stop any exercise at >2/10 pain or locking.' },
+ elbow: { title:'Elbow Rehab', icon:'', color:'#c9993a', lib:ELBOW_LIB, weekly:ELBOW_WEEKLY, phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–10'}, disclaimer:'Bilateral medial epicondyle tendinopathy. No forced gripping under load. False grip gated to Phase 3.' },
+ shoulder: { title:'Shoulder Rehab', icon:'', color:'#9b8fc4', lib:SHOULDER_LIB, weekly:SHOULDER_WEEKLY, phases:{1:'Wks 1–3',2:'Wks 4–6',3:'Wks 7–10'}, disclaimer:'Stop at any pinching above 2/10 in overhead range.' },
+ mobility: { title:'Mobility Warmup', icon:'', color:'#c47a45', lib:null, weekly:null, phases:{}, disclaimer:null },
+  bulletproof: { title:'Bulletproof Mobility', icon:'🛡', color:'#6b6ba8', lib:null, weekly:null, phases:{}, disclaimer:null },
 };
 
 function renderRehabDashboard() {
  const configs = [
- { key:'knee',        color:'#4ECDC4', icon:'',  label:'Knee Rehab',           sub:'Grade IV chondropathy · Meniscal · 3 phases' },
- { key:'elbow',       color:'#F7B731', icon:'',  label:'Elbow Rehab',          sub:'Golfer\'s · Tennis · Wrist/Forearm' },
- { key:'shoulder',    color:'#A78BFA', icon:'',  label:'Shoulder Rehab',       sub:'Rotator Cuff · Overhead Mobility' },
- { key:'bulletproof', color:'#6366f1', icon:'🛡', label:'Bulletproof Mobility', sub:'T-spine · Shoulders · Wrists · Hips · Lower back · 10 min' },
+ { key:'knee',        color:'#5aada6', icon:'',  label:'Knee Rehab',           sub:'Grade IV chondropathy · Meniscal · 3 phases' },
+ { key:'elbow',       color:'#c9993a', icon:'',  label:'Elbow Rehab',          sub:'Golfer\'s · Tennis · Wrist/Forearm' },
+ { key:'shoulder',    color:'#9b8fc4', icon:'',  label:'Shoulder Rehab',       sub:'Rotator Cuff · Overhead Mobility' },
+ { key:'bulletproof', color:'#6b6ba8', icon:'🛡', label:'Bulletproof Mobility', sub:'T-spine · Shoulders · Wrists · Hips · Lower back · 10 min' },
  ];
  document.getElementById('rehab-module-cards').innerHTML = configs.map(m => `
  <button onclick="showRehabModule('${m.key}')" style="width:100%;background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
@@ -2782,7 +2790,7 @@ function renderBulletproofModule(view) {
 }
 
 function renderMobilityModule(view) {
- const exHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#FB923C', 0, '', 'r-')).join('');
+ const exHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#c47a45', 0, '', 'r-')).join('');
  view.innerHTML = `
  <div style="font-family:'Outfit',sans-serif;max-width:520px;margin:0 auto;padding-bottom:60px;">
  <div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;position:sticky;top:0;z-index:10;">
@@ -3921,14 +3929,14 @@ function saveNutritionSettings() {
 // ═══════════════════════════════════════════════════════════════
 
 const SESSION_TYPES = [
-  { id:'wod',       label:'WOD',           color:'#ef4444', sub:'CrossFit class'           },
+  { id:'wod',       label:'WOD',           color:'#b86a5e', sub:'CrossFit class'           },
   { id:'open-gym',  label:'Open Gym',       color:'#c9a84c', sub:'Strength / skill work'    },
-  { id:'cardio',    label:'Cardio',         color:'#38bdf8', sub:'Row, bike, run, ski'      },
-  { id:'hyrox',     label:'HYROX',          color:'#f97316', sub:'HYROX-style training'     },
-  { id:'class',     label:'Class',          color:'#a78bfa', sub:'Pilates, boxing, etc.'    },
-  { id:'mobility',  label:'Mobility',       color:'#34d399', sub:'Yoga, stretching'         },
-  { id:'comp',      label:'Competition',    color:'#fbbf24', sub:'Event / competition'      },
-  { id:'custom',    label:'Custom',         color:'#94a3b8', sub:'Anything else'            },
+  { id:'cardio',    label:'Cardio',         color:'#6497b8', sub:'Row, bike, run, ski'      },
+  { id:'hyrox',     label:'HYROX',          color:'#c47a45', sub:'HYROX-style training'     },
+  { id:'class',     label:'Class',          color:'#8a7ab8', sub:'Pilates, boxing, etc.'    },
+  { id:'mobility',  label:'Mobility',       color:'#5aab8e', sub:'Yoga, stretching'         },
+  { id:'comp',      label:'Competition',    color:'#c9993a', sub:'Event / competition'      },
+  { id:'custom',    label:'Custom',         color:'#787a7e', sub:'Anything else'            },
 ];
 
 const SCORE_TYPES = [
