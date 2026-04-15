@@ -2384,6 +2384,13 @@ function isTrainingDay(dateKey) {
 
 function todayDayType() {
   const key = todayKey();
+  // Check explicit override first
+  const overrides = getDayOverride();
+  if (overrides[key]) return overrides[key];
+  // Check Fuel tab dayType (set there)
+  const ns = getNS();
+  if (ns.dayType) return ns.dayType;
+  // Fall back to weekly pattern
   return isTrainingDay(key) ? 'training' : 'rest';
 }
 
@@ -2519,7 +2526,7 @@ function renderToday() {
         ${Array.from({length:7},(_,i)=>{
           const d = new Date(weekStart);
           d.setDate(weekStart.getDate()+i);
-          const dk = d.toISOString().slice(0,10);
+          const dk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
           const isToday = dk === dateKey;
           const isTrain = isTrainingDay(dk);
           const isPast = d < now && !isToday;
@@ -2529,7 +2536,7 @@ function renderToday() {
             style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid ${isToday?dtColor:'var(--border)'};
             background:${isToday?dtColor+'18':'var(--card2)'};cursor:pointer;text-align:center;">
             <div style="font-size:10px;font-weight:700;color:${isToday?dtColor:'var(--subtle)'};
-              text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${DAY_SHORT[(d.getDay()+6)%7]}</div>
+              text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(d.getDay()+6)%7]}</div>
             <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};
               margin:0 auto;opacity:${isPast&&!todayWorkout?0.4:1};"></div>
           </button>`;
@@ -2773,7 +2780,12 @@ function renderToday() {
 
 // ── Today interaction handlers ────────────────────────────────────
 function setTodayType(type) {
+  // Write to day override (Today tab)
   setDayOverride(todayKey(), type);
+  // Sync to Fuel tab nutrition dayType
+  const ns = getNS();
+  ns.dayType = type;
+  saveNS(ns);
   renderToday();
 }
 
@@ -5602,8 +5614,18 @@ function getNS() {
   return JSON.parse(localStorage.getItem('atlas_nutrition') || '{"profile":null,"log":{},"dayType":"training","savedMeals":{},"weekPlan":{},"templates":{}}');
 }
 function saveNS(ns) { localStorage.setItem('atlas_nutrition', JSON.stringify(ns)); }
-function todayKey() { return new Date().toISOString().slice(0,10); }
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
 function weekKeys() {
+  function localKey(d) {
+    return d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0');
+  }
   const keys = [];
   const d = new Date();
   const day = d.getDay();
@@ -5612,7 +5634,7 @@ function weekKeys() {
   for (let i = 0; i < 7; i++) {
     const dd = new Date(monday);
     dd.setDate(monday.getDate() + i);
-    keys.push(dd.toISOString().slice(0,10));
+    keys.push(localKey(dd));
   }
   return keys;
 }
@@ -5656,6 +5678,8 @@ function setDayType(type) {
   const ns = getNS();
   ns.dayType = type;
   saveNS(ns);
+  // Sync to Today tab day override
+  setDayOverride(todayKey(), type);
   renderNutrition();
 }
 
