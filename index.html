@@ -2329,20 +2329,24 @@ function renderRehabDashboard() {
 }
 
 function showRehabModule(key) {
- STATE.rehabModule = key;
- document.getElementById('rehab-dashboard').classList.add('hidden');
- document.getElementById('rehab-module-view').classList.remove('hidden');
- renderRehabModuleView(key);
+  STATE.rehabModule = key;
+  // Remove any existing module overlay
+  document.getElementById('rehab-overlay')?.remove();
+  // Create a fixed full-screen overlay — avoids nested scroll issues on iOS
+  const ovl = document.createElement('div');
+  ovl.id = 'rehab-overlay';
+  ovl.style.cssText = 'position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;';
+  document.body.appendChild(ovl);
+  renderRehabModuleView(key, ovl);
 }
 
 function hideRehabModule() {
- STATE.rehabModule = null;
- document.getElementById('rehab-dashboard').classList.remove('hidden');
- document.getElementById('rehab-module-view').classList.add('hidden');
+  STATE.rehabModule = null;
+  document.getElementById('rehab-overlay')?.remove();
 }
 
-function renderRehabModuleView(key) {
- const view = document.getElementById('rehab-module-view');
+function renderRehabModuleView(key, targetEl) {
+ const view = targetEl || document.getElementById('rehab-overlay') || document.getElementById('rehab-module-view');
  if (key === 'mobility') { renderMobilityModule(view); return; }
   if (key === 'bulletproof') { renderBulletproofModule(view); return; }
 
@@ -2847,8 +2851,9 @@ function getSkillProgress(trackId, nodeId) {
     : null;
   const plateauDx = (data.plateauDiagnoses || {})[nodeId] || null;
 
+  const inferredAt = (STATE.skillLevels[trackId] || {})[nodeId + '_inferredAt'] || null;
   return { achieved: achieved.includes(nodeId), isCurrent: currentLevel === nodeId,
-           attempts, daysSince, plateauDx };
+           attempts, daysSince, plateauDx, inferredAt };
 }
 
 function getWeeklyRec(trackId, nodeId) {
@@ -2889,6 +2894,215 @@ function getTrackGroups() {
 }
 
 // ── Render skills screen ──────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════
+// SKILL INFERENCE ENGINE
+// Scans the session log for evidence of skill achievement
+// ═══════════════════════════════════════════════════════════════
+
+
+// ── Skill inference rules (separate from node data to avoid syntax issues) ──
+const SKILL_INFER_RULES = {
+  // CrossFit
+  'cf-5': { keywords:['strict hspu','strict handstand push','handstand push-up strict','handstand pushup strict'], minReps:5, sessions:3, weeks:2 },
+  'cf-2': { keywords:['toes to bar','toes-to-bar','ttb','t2b'], minReps:10, sessions:3, weeks:2 },
+  'cf-1': { keywords:['double under','double-under','dubs'], minReps:10, sessions:3, weeks:2 },
+  'cf-7': { keywords:['bar muscle-up','bar muscle up','bmu'], minReps:1, sessions:2, weeks:2 },
+  'cf-6': { keywords:['pistol squat','pistol'], minReps:5, sessions:3, weeks:2 },
+  'cf-8': { keywords:['rope climb','legless rope'], minReps:1, sessions:2, weeks:2 },
+  // Muscle-up
+  'mu-3': { keywords:['strict pull-up','strict pull up','strict pullup'], minReps:10, sessions:3, weeks:2 },
+  'mu-4': { keywords:['chest to bar','chest-to-bar','c2b','ctb'], minReps:5, sessions:3, weeks:2 },
+  'mu-5': { keywords:['ring dip'], minReps:10, sessions:3, weeks:2 },
+  'mu-8': { keywords:['ring muscle-up','ring muscle up','rmu'], minReps:1, sessions:2, weeks:2 },
+  'mu-9': { keywords:['ring muscle-up','ring muscle up'], minReps:5, sessions:3, weeks:2 },
+  // Handstand
+  'hs-3': { keywords:['wall walk','wall handstand'], minReps:0, sessions:3, weeks:2 },
+  'hs-4': { keywords:['chest to wall','wall handstand','hs hold'], minReps:0, sessions:3, weeks:2 },
+  'hs-6': { keywords:['freestanding handstand','free handstand','freestanding hs'], minReps:0, sessions:4, weeks:3 },
+  // Butterfly
+  'bf-4': { keywords:['kipping pull-up','kipping pull up','kip pull-up'], minReps:10, sessions:3, weeks:2 },
+  'bf-7': { keywords:['butterfly pull-up','butterfly pull up','butterfly pu'], minReps:10, sessions:3, weeks:2 },
+  // Planche
+  'pl-3': { keywords:['planche lean'], minReps:0, sessions:3, weeks:2 },
+  'pl-4': { keywords:['tuck planche'], minReps:0, sessions:3, weeks:2 },
+  // Front lever
+  'fl-3': { keywords:['tuck front lever','front lever tuck'], minReps:0, sessions:3, weeks:2 },
+  'fl-8': { keywords:['front lever','full front lever'], minReps:0, sessions:3, weeks:3 },
+  // Strength
+  'st-3': { keywords:['kettlebell swing','kb swing'], minReps:50, sessions:3, weeks:2 },
+  'st-7': { keywords:['weighted pull-up','pull-up +','weighted pullup'], minReps:5, sessions:3, weeks:2 },
+  'st-9': { keywords:['l-sit','l sit','lsit'], minReps:0, sessions:3, weeks:2 },
+};
+
+function extractRepsFromText(text, keyword) {
+  const lower = text.toLowerCase();
+  const kIdx = lower.indexOf(keyword.toLowerCase());
+  if (kIdx < 0) return null;
+  const nearby = text.slice(Math.max(0, kIdx - 30), kIdx + keyword.length + 60);
+  // Look for sets×reps patterns like "5x10", "5×10", "8×10+" — take the REPS (second number)
+  const setsReps = nearby.match(/(\d+)\s*[x×]\s*(\d+)/);
+  if (setsReps) return parseInt(setsReps[2]); // return reps, not sets
+  // Single number with modifier: "10+", "10 reps"
+  const single = nearby.match(/(\d+)\s*[+]/) || nearby.match(/(\d+)\s*reps?/i) || nearby.match(/(\d+)/);
+  if (single) return parseInt(single[1]);
+  return 0; // keyword found, no rep count = just mentioned
+}
+
+function getWeekKey(ts) {
+  const d = new Date(ts);
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + week;
+}
+
+function scanLogForSkillInference() {
+  const log = getSessionLog();
+  if (!log.length) return [];
+
+  const newlyInferred = [];
+
+  Object.entries(SKILL_TREES).forEach(([trackId, nodes]) => {
+    nodes.forEach(node => {
+      const rule = SKILL_INFER_RULES[node.id];
+      if (!rule) return;
+
+      // Skip if already achieved
+      const data = STATE.skillLevels[trackId] || {};
+      if ((data.achieved || []).includes(node.id)) return;
+      const { keywords, minReps = 0, sessions: reqSessions = 3, weeks: reqWeeks = 2 } = rule;
+
+      // Scan every log entry for keyword matches
+      const matchingSessions = [];
+
+      log.forEach(entry => {
+        const searchText = [
+          entry.name || '',
+          entry.workoutText || '',
+          entry.note || '',
+          ...(entry.exercises || []).map(e => (e.name || '') + ' ' + (e.detail || '')),
+        ].join(' ').toLowerCase();
+
+        const keywordHit = keywords.some(kw => searchText.includes(kw.toLowerCase()));
+        if (!keywordHit) return;
+
+        // Check reps if required
+        if (minReps > 0) {
+          const repsFound = keywords.reduce((max, kw) => {
+            const r = extractRepsFromText(searchText, kw);
+            return r !== null ? Math.max(max, r) : max;
+          }, -1);
+          if (repsFound >= 0 && repsFound < minReps) return; // found but not enough reps
+        }
+
+        matchingSessions.push({ ts: entry.ts || Date.now(), id: entry.id });
+      });
+
+      if (matchingSessions.length < reqSessions) return;
+
+      // Check they span enough weeks
+      const weeks = new Set(matchingSessions.map(s => getWeekKey(s.ts)));
+      if (weeks.size < reqWeeks) return;
+
+      // Criteria met — mark as inferred
+      newlyInferred.push({
+        trackId, nodeId: node.id, nodeName: node.name,
+        sessions: matchingSessions.length, weeks: weeks.size,
+        keywords: keywords.slice(0, 2),
+      });
+    });
+  });
+
+  return newlyInferred;
+}
+
+function applyInferredAchievements(inferred, silent) {
+  if (!inferred.length) return;
+
+  inferred.forEach(({ trackId, nodeId }) => {
+    if (!STATE.skillLevels[trackId]) STATE.skillLevels[trackId] = {};
+    const data = STATE.skillLevels[trackId];
+    if (!(data.achieved || []).includes(nodeId)) {
+      if (!data.achieved) data.achieved = [];
+      data.achieved.push(nodeId);
+      data[nodeId + '_inferredAt'] = Date.now();
+      // Advance currentLevel if prerequisites met
+      const tree = SKILL_TREES[trackId];
+      const achieved = data.achieved;
+      const idx = tree.findIndex(n => n.id === nodeId);
+      const next = tree[idx + 1];
+      if (next && next.prereq.every(p => achieved.includes(p))) {
+        data.currentLevel = next.id;
+      }
+    }
+  });
+
+  saveState();
+
+  if (!silent) showInferenceSummary(inferred);
+}
+
+function showInferenceSummary(inferred) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:600;display:flex;align-items:flex-end;backdrop-filter:blur(8px);';
+
+  const items = inferred.map(i => {
+    const track = SKILL_TRACKS.find(t => t.id === i.trackId);
+    const col = track ? track.color : 'var(--green)';
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="width:36px;height:36px;border-radius:10px;background:${col}20;border:1px solid ${col}40;
+        display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✓</div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:600;color:var(--ink);">${i.nodeName}</div>
+        <div style="font-size:12px;color:var(--mid);margin-top:2px;">
+          Detected in ${i.sessions} session${i.sessions>1?'s':''} across ${i.weeks} week${i.weeks>1?'s':''}
+        </div>
+        <div style="font-size:11px;color:${col};margin-top:3px;font-weight:600;">
+          ${i.keywords.join(', ')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;
+      margin:0 auto;padding:24px 20px calc(var(--safe-bottom)+24px);">
+      <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <div style="font-size:24px;">🎯</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;
+          color:var(--ink);text-transform:uppercase;letter-spacing:0.04em;">Skills Detected</div>
+      </div>
+      <div style="font-size:14px;color:var(--mid);margin-bottom:18px;line-height:1.5;">
+        ATLAS inferred these achievements from your session log.
+        You can always override in the Skills tab.
+      </div>
+      ${items}
+      <button onclick="this.closest('div[style*=inset]').remove();showTab('skills');"
+        style="width:100%;padding:16px;background:linear-gradient(135deg,var(--green),#059669);
+        color:#fff;border:none;border-radius:13px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;">
+        View in Skills →
+      </button>
+      <button onclick="this.closest('div[style*=inset]').remove();"
+        style="width:100%;padding:13px;background:transparent;border:none;color:var(--subtle);
+        font-size:14px;cursor:pointer;margin-top:8px;">Dismiss</button>
+    </div>`;
+
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function runInferenceCheck(silent) {
+  const inferred = scanLogForSkillInference();
+  // Filter out already-applied inferences
+  const newOnes = inferred.filter(i => {
+    const data = STATE.skillLevels[i.trackId] || {};
+    return !(data.achieved || []).includes(i.nodeId);
+  });
+  if (newOnes.length) applyInferredAchievements(newOnes, silent);
+  return newOnes.length;
+}
+
 function renderSkills() {
   // Group selector
   const groups = getTrackGroups();
@@ -2925,6 +3139,10 @@ function renderSkills() {
 
   document.getElementById('skills-track-row').innerHTML = trackHTML;
   renderSkillTree(STATE.skillTrack);
+
+  // Silently run inference on every skills render (catches new log data)
+  const found = runInferenceCheck(true);
+  if (found > 0) renderSkillTree(STATE.skillTrack); // re-render if new achievements
 }
 
 function setSkillTrack(id) {
@@ -2955,6 +3173,9 @@ function renderSkillTree(trackId) {
     const recBadge = rec ? `<span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;
       background:${rec.color}18;color:${rec.color};margin-left:6px;">
       ${rec.urgent ? '⚡ ' : ''}${rec.label}</span>` : '';
+    const inferBadge = p.inferredAt ? `<span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;
+      background:rgba(52,211,153,0.12);color:var(--green);margin-left:6px;" title="Auto-detected from log">
+      ⟳ inferred</span>` : '';
 
     const attemptInfo = p.attempts > 0 ? `<span style="font-size:11px;color:var(--subtle);">${p.attempts} attempt${p.attempts>1?'s':''}${p.daysSince !== null ? ` · ${p.daysSince}d ago` : ''}</span>` : '';
 
@@ -2974,7 +3195,7 @@ function renderSkillTree(trackId) {
         <div class="skill-info" style="flex:1;">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
             <span class="skill-name">${node.name}</span>
-            ${recBadge}
+            ${recBadge}${inferBadge}
           </div>
           <div class="skill-sub">${node.desc}</div>
           ${attemptInfo ? `<div style="margin-top:4px;">${attemptInfo}</div>` : ''}
@@ -3496,6 +3717,8 @@ function getSessionLog() {
 }
 function saveSessionLog(log) {
   localStorage.setItem('atlas_session_log', JSON.stringify(log));
+  // Run inference check silently after every log save
+  setTimeout(() => runInferenceCheck(false), 300);
 }
 
 function renderLog() {
