@@ -2367,32 +2367,48 @@ function buildExBody(ex, color, cfg, mod, isModified, cardId) {
 }
 
 function toggleExCard(id, color) {
-  STATE.openExCards[id] = !STATE.openExCards[id];
-  const isOpen = STATE.openExCards[id];
-  // Search within rehab overlay first to avoid duplicate-id conflicts
+  const isCurrentlyOpen = !!STATE.openExCards[id];
+  const willOpen = !isCurrentlyOpen;
+
+  // Collapse all other open cards first
   const overlay = document.getElementById('rehab-overlay');
   const searchRoot = overlay || document;
+
+  Object.keys(STATE.openExCards).forEach(otherId => {
+    if (otherId !== id && STATE.openExCards[otherId]) {
+      STATE.openExCards[otherId] = false;
+      const otherEl = searchRoot.querySelector ? searchRoot.querySelector('#' + otherId) : document.getElementById(otherId);
+      if (otherEl) {
+        otherEl.classList.remove('open');
+        const otherSvg = otherEl.querySelector('.ex-card-header svg');
+        if (otherSvg) otherSvg.style.transform = 'rotate(0deg)';
+        const otherBody = otherEl.querySelector('.ex-body-inner');
+        if (otherBody) otherBody.remove();
+      }
+    }
+  });
+
+  // Toggle the tapped card
+  STATE.openExCards[id] = willOpen;
   const el = searchRoot.querySelector ? searchRoot.querySelector('#' + id) : document.getElementById(id);
   if (!el) return;
 
-  el.classList.toggle('open', isOpen);
+  el.classList.toggle('open', willOpen);
 
-  // Rotate chevron
   const svg = el.querySelector('.ex-card-header svg');
-  if (svg) svg.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+  if (svg) svg.style.transform = willOpen ? 'rotate(180deg)' : 'rotate(0deg)';
 
-  // Add or remove body
   const existing = el.querySelector('.ex-body-inner');
   const data = STATE.exCardData && STATE.exCardData[id];
 
-  if (isOpen && !existing && data) {
+  if (willOpen && !existing && data) {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = buildExBody(data.ex, data.color, data.cfg, data.mod, data.isModified, id);
     const inner = wrapper.firstElementChild;
     if (inner) el.appendChild(inner);
-  } else if (!isOpen && existing) {
+  } else if (!willOpen && existing) {
     existing.remove();
-  } else if (isOpen && !existing && !data && STATE.rehabModule) {
+  } else if (willOpen && !existing && !data && STATE.rehabModule) {
     renderRehabModuleView(STATE.rehabModule);
   }
 }
