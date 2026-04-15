@@ -444,100 +444,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 
 <!-- ═══ TODAY ═══ -->
 <div id="screen-today" class="screen active">
-<div class="screen-inner">
-  <div id="screen-header-today"></div>
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;">
-    <div>
-      <div class="eyebrow" id="today-date"></div>
-      <div class="hero-title">Today's<br><span class="acc">Session</span></div>
-    </div>
-    <button onclick="openSettings()" id="profile-avatar"
-      style="width:44px;height:44px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:4px;
-      font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:#0a0a08;
-      letter-spacing:0.04em;box-shadow:0 2px 12px var(--accent-glow);">
-    </button>
-  </div>
-
- <!-- Block 1: Warm-up -->
- <div class="today-block" id="block-warmup">
- <div class="today-block-header" onclick="toggleBlock('warmup')">
- <div class="today-block-num" style="background:#fff4ed;color:var(--accent);">1</div>
- <div class="today-block-info">
- <div class="today-block-title">Mobility Warm-up</div>
- <div class="today-block-sub">Full body flow · 5–8 min · 8 movements</div>
- </div>
- <div class="today-block-status" id="status-warmup">—</div>
- </div>
- <div class="today-block-body hidden" id="body-warmup">
- <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
- <span style="font-size:11px;background:#fff4ed;color:var(--accent);padding:2px 9px;border-radius:99px;font-weight:600;">Neck · Thoracic · Hips · Spine</span>
- <span style="font-size:11px;background:var(--bg3);color:var(--mid);padding:2px 9px;border-radius:99px;font-weight:600;">Before every session</span>
- </div>
- <div id="warmup-exercises"></div>
- <button class="start-block-btn" onclick="markBlockDone('warmup')"> Mark Warm-up Complete</button>
- </div>
- </div>
-
- <!-- Block 2: Prep / Rehab -->
- <div class="today-block" id="block-prep">
- <div class="today-block-header" onclick="toggleBlock('prep')">
- <div class="today-block-num" style="background:#e8faf9;color:var(--knee);">2</div>
- <div class="today-block-info">
- <div class="today-block-title">Rehab Prep</div>
- <div class="today-block-sub" id="prep-sub">Knee · Elbow · 10–12 min</div>
- </div>
- <div class="today-block-status" id="status-prep">—</div>
- </div>
- <div class="today-block-body hidden" id="body-prep">
- <div class="notice"><span class="notice-icon">!</span> Run today's rehab exercises before training. This is your joint prep, not optional.</div>
- <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
- <button class="btn-ghost" onclick="showTab('rehab');showRehabModule('knee')"> Knee Rehab</button>
- <button class="btn-ghost" onclick="showTab('rehab');showRehabModule('elbow')"> Elbow Rehab</button>
- <button class="btn-ghost" onclick="showTab('rehab');showRehabModule('shoulder')"> Shoulder</button>
- </div>
- <button class="start-block-btn" onclick="markBlockDone('prep')"> Mark Prep Complete</button>
- </div>
- </div>
-
- <!-- Block 3: Workout -->
- <div class="today-block" id="block-workout">
- <div class="today-block-header" onclick="toggleBlock('workout')">
- <div class="today-block-num" style="background:#fff7ed;color:var(--accent);">3</div>
- <div class="today-block-info">
- <div class="today-block-title" id="workout-block-title">Today's Workout</div>
- <div class="today-block-sub" id="workout-block-sub">Select from Train tab</div>
- </div>
- <div class="today-block-status" id="status-workout">—</div>
- </div>
- <div class="today-block-body hidden" id="body-workout">
- <div id="today-workout-preview"></div>
- <button class="start-block-btn" onclick="showTab('train')" style="margin-bottom:8px;"> Go to Workout</button>
- </div>
- </div>
-
- <!-- Block 4: Cool-down -->
- <div class="today-block" id="block-cooldown">
- <div class="today-block-header" onclick="toggleBlock('cooldown')">
- <div class="today-block-num" style="background:#f3f0ff;color:var(--shoulder);">4</div>
- <div class="today-block-info">
- <div class="today-block-title">Cool-down</div>
- <div class="today-block-sub">Targeted stretches · 5–8 min</div>
- </div>
- <div class="today-block-status" id="status-cooldown">—</div>
- </div>
- <div class="today-block-body hidden" id="body-cooldown">
- <div id="cooldown-exercises"></div>
- <button class="start-block-btn" onclick="markBlockDone('cooldown')"> Mark Cool-down Complete</button>
- </div>
- </div>
-
- <!-- Session complete -->
- <div id="session-complete-banner" class="hidden" style="background:linear-gradient(135deg,rgba(52,211,153,0.12),rgba(52,211,153,0.06));border:1.5px solid rgba(52,211,153,0.35);border-radius:14px;padding:16px;text-align:center;margin-top:4px;">
- <div style="font-size:12px;font-weight:700;letter-spacing:0.2em;color:var(--green);margin-bottom:8px;text-transform:uppercase;">Session Complete</div>
- <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--green);">All blocks done.</div>
- <div style="font-size:14px;color:var(--mid);margin-top:4px;">Logged to your history.</div>
- </div>
+<div class="screen-inner" id="today-inner">
+  <!-- Dynamic content rendered by renderToday() -->
 </div>
 </div>
 
@@ -2440,56 +2348,446 @@ function showTab(tab) {
 // ═══════════════════════════════════════════════════════════════════════
 // TODAY SCREEN
 // ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// TODAY DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+
+// ── Day-type helpers ─────────────────────────────────────────────
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function getTrainingPattern() {
+  const p = getProfile();
+  // Default pattern: Mon Tue Thu Fri Sat = train
+  return p.trainingDays || [1,2,4,5,6];
+}
+
+function getDayOverride() {
+  const key = 'atlas_day_override';
+  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { return {}; }
+}
+function setDayOverride(dateKey, type) {
+  const overrides = getDayOverride();
+  overrides[dateKey] = type;
+  // Keep only last 30 days
+  const keys = Object.keys(overrides).sort();
+  if (keys.length > 30) delete overrides[keys[0]];
+  localStorage.setItem('atlas_day_override', JSON.stringify(overrides));
+}
+
+function isTrainingDay(dateKey) {
+  const overrides = getDayOverride();
+  if (overrides[dateKey]) return overrides[dateKey] === 'training';
+  const d = new Date(dateKey + 'T12:00:00');
+  return getTrainingPattern().includes(d.getDay());
+}
+
+function todayDayType() {
+  const key = todayKey();
+  return isTrainingDay(key) ? 'training' : 'rest';
+}
+
+// ── Daily metrics from other tabs ────────────────────────────────
+function getTodayNutrition() {
+  const ns = getNS();
+  const key = todayKey();
+  const log = (ns.log && ns.log[key]) || {};
+  const all = Object.values(log).flat();
+  const consumed = all.reduce((a,e) => ({
+    kcal: a.kcal+(e.kcal||0), protein: a.protein+(e.protein||0),
+    carbs: a.carbs+(e.carbs||0), fat: a.fat+(e.fat||0)
+  }), {kcal:0,protein:0,carbs:0,fat:0});
+  const dayType = todayDayType();
+  const target = ns.macros ? ns.macros[dayType] : null;
+  return { consumed, target };
+}
+
+function getTodayWorkouts() {
+  const log = getSessionLog();
+  const today = todayKey();
+  return log.filter(s => {
+    if (!s.ts) return false;
+    return new Date(s.ts).toISOString().slice(0,10) === today;
+  });
+}
+
+function getTodayActivity() {
+  const key = 'atlas_activity_' + todayKey();
+  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { return {}; }
+}
+function saveTodayActivity(data) {
+  localStorage.setItem('atlas_activity_' + todayKey(), JSON.stringify(data));
+}
+
+// ── Greeting ──────────────────────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+// ── Main render ───────────────────────────────────────────────────
 function renderToday() {
- const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
- const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
- const now = new Date();
- document.getElementById('today-date').textContent =
- `${days[now.getDay()].toUpperCase()} · ${now.getDate()} ${months[now.getMonth()].toUpperCase()} ${now.getFullYear()}`;
+  const container = document.getElementById('today-inner');
+  if (!container) return;
 
- // Warm-up exercises
- const wuHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#c47a45', 0)).join('');
- document.getElementById('warmup-exercises').innerHTML = wuHTML;
+  const now      = new Date();
+  const dateKey  = todayKey();
+  const dayType  = todayDayType();
+  const isTrain  = dayType === 'training';
+  const p        = getProfile();
+  const name     = p.name ? p.name.split(' ')[0] : null;
+  const { consumed, target } = getTodayNutrition();
+  const workouts = getTodayWorkouts();
+  const activity = getTodayActivity();
 
- // Cool-down exercises
- const cdHTML = COOL_DOWN.map(ex => renderExCard(ex, '#9b8fc4', 0)).join('');
- document.getElementById('cooldown-exercises').innerHTML = cdHTML;
+  // Calorie ring
+  const kcalBurned   = activity.kcalBurned || 0;
+  const kcalTarget   = target ? target.kcal : null;
+  const kcalConsumed = consumed.kcal;
+  const ringTarget   = kcalTarget || 2500;
+  const ringPct      = Math.min(1, kcalConsumed / ringTarget);
+  const burnPct      = Math.min(1, kcalBurned / ringTarget);
+  const circ = 339; // 2π×54
+  const consumedOffset = circ - ringPct * circ;
+  const burnOffset     = circ - burnPct * circ;
 
- // Workout preview
- renderTodayWorkoutPreview();
+  // Day type colour
+  const dtColor = isTrain ? 'var(--accent)' : '#7b9fb8';
+  const dtLabel = isTrain ? 'Training Day' : 'Rest Day';
+  const dtIcon  = isTrain ? '⚡' : '🌙';
 
- // Update statuses
- ['warmup','prep','workout','cooldown'].forEach(k => {
- const el = document.getElementById('status-' + k);
- if (el) el.textContent = STATE.blocksDone[k] ? '' : '–';
- });
- document.getElementById('status-warmup').textContent = STATE.blocksDone.warmup ? '' : '–';
+  // Weekly pattern row
+  const weekDays = [];
+  for (let i=0; i<7; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - now.getDay() + i + 1); // Mon–Sun
+    if (d.getDay() === 0) d.setDate(d.getDate() + 7); // skip to next week if sunday rolls back
+    weekDays.push(d);
+  }
+  // Simple Mon–Sun this week
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - ((now.getDay()+6)%7));
 
- // Session complete
- const allDone = Object.values(STATE.blocksDone).every(Boolean);
- document.getElementById('session-complete-banner').classList.toggle('hidden', !allDone);
+  container.innerHTML = `
+
+    <!-- ── Header ── -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.25em;color:var(--subtle);
+          text-transform:uppercase;margin-bottom:4px;">
+          ${DAY_NAMES[now.getDay()].toUpperCase()} · ${now.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()].toUpperCase()} ${now.getFullYear()}
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:700;
+          color:var(--ink);line-height:1;letter-spacing:0.02em;">
+          ${getGreeting()}${name ? ',<br><span style="color:var(--accent);">' + name + '</span>' : ''}
+        </div>
+      </div>
+      <button onclick="openSettings()" id="profile-avatar"
+        style="width:44px;height:44px;border-radius:50%;background:var(--accent);border:none;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+        margin-top:4px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;
+        color:#0a0a08;letter-spacing:0.04em;box-shadow:0 2px 12px var(--accent-glow);">
+      </button>
+    </div>
+
+    <!-- ── Day type + weekly pattern ── -->
+    <div style="background:var(--card);border:1.5px solid ${dtColor}30;border-radius:18px;
+      padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:20px;">${dtIcon}</span>
+          <div>
+            <div style="font-size:17px;font-weight:700;color:${dtColor};">${dtLabel}</div>
+            <div style="font-size:12px;color:var(--subtle);">Tap a day to override</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="setTodayType('training')"
+            style="padding:7px 12px;border-radius:99px;border:1.5px solid ${isTrain?'var(--accent)':'var(--border2)'};
+            background:${isTrain?'var(--accent-light)':'transparent'};color:${isTrain?'var(--accent)':'var(--subtle)'};
+            font-size:12px;font-weight:700;cursor:pointer;">Train</button>
+          <button onclick="setTodayType('rest')"
+            style="padding:7px 12px;border-radius:99px;border:1.5px solid ${!isTrain?'#7b9fb8':'var(--border2)'};
+            background:${!isTrain?'rgba(123,159,184,0.12)':'transparent'};color:${!isTrain?'#7b9fb8':'var(--subtle)'};
+            font-size:12px;font-weight:700;cursor:pointer;">Rest</button>
+        </div>
+      </div>
+      <!-- Week strip -->
+      <div style="display:flex;gap:5px;" id="today-week-strip">
+        ${Array.from({length:7},(_,i)=>{
+          const d = new Date(weekStart);
+          d.setDate(weekStart.getDate()+i);
+          const dk = d.toISOString().slice(0,10);
+          const isToday = dk === dateKey;
+          const isTrain = isTrainingDay(dk);
+          const isPast = d < now && !isToday;
+          const todayWorkout = getSessionLog().find(s=>s.ts&&new Date(s.ts).toISOString().slice(0,10)===dk);
+          const dotColor = todayWorkout ? 'var(--green)' : isTrain ? dtColor : 'var(--border2)';
+          return `<button onclick="setWeekDayOverride('${dk}')"
+            style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid ${isToday?dtColor:'var(--border)'};
+            background:${isToday?dtColor+'18':'var(--card2)'};cursor:pointer;text-align:center;">
+            <div style="font-size:10px;font-weight:700;color:${isToday?dtColor:'var(--subtle)'};
+              text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${DAY_SHORT[(d.getDay()+6)%7]}</div>
+            <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};
+              margin:0 auto;opacity:${isPast&&!todayWorkout?0.4:1};"></div>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- ── Calorie dashboard ── -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;
+      padding:18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:16px;">
+
+        <!-- Ring -->
+        <div style="position:relative;flex-shrink:0;">
+          <svg width="120" height="120" style="transform:rotate(-90deg);">
+            <!-- Background -->
+            <circle cx="60" cy="60" r="54" fill="none" stroke="var(--border)" stroke-width="8"/>
+            <!-- Calories burned (outer) -->
+            <circle cx="60" cy="60" r="54" fill="none" stroke="${dtColor}" stroke-width="8"
+              stroke-dasharray="${circ}" stroke-dashoffset="${burnOffset.toFixed(1)}"
+              stroke-linecap="round" opacity="0.35"/>
+            <!-- Calories consumed (inner) -->
+            <circle cx="60" cy="60" r="44" fill="none" stroke="var(--border)" stroke-width="7"/>
+            <circle cx="60" cy="60" r="44" fill="none" stroke="var(--accent)" stroke-width="7"
+              stroke-dasharray="${(2*Math.PI*44).toFixed(1)}"
+              stroke-dashoffset="${((2*Math.PI*44)*(1-Math.min(1,kcalConsumed/(kcalTarget||2500)))).toFixed(1)}"
+              stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;
+              color:var(--ink);line-height:1;">${kcalConsumed}</div>
+            <div style="font-size:9px;color:var(--subtle);font-weight:600;letter-spacing:0.05em;">EATEN</div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div style="flex:1;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div style="background:var(--card2);border-radius:11px;padding:10px 12px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+                color:var(--subtle);margin-bottom:3px;">Target</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;
+                color:var(--ink);">${kcalTarget || '—'}</div>
+              <div style="font-size:10px;color:var(--subtle);">kcal</div>
+            </div>
+            <div style="background:var(--card2);border-radius:11px;padding:10px 12px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+                color:var(--subtle);margin-bottom:3px;">Burned</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;
+                color:${dtColor};" id="today-kcal-burned">${kcalBurned || '—'}</div>
+              <div style="font-size:10px;color:var(--subtle);">kcal</div>
+            </div>
+          </div>
+          <!-- Macro bars -->
+          ${workouts.length > 0 ? `
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+            color:var(--subtle);margin-bottom:6px;">Today's Activity</div>
+          ${workouts.map(w=>`
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>
+              <div style="font-size:12px;color:var(--ink2);flex:1;">${w.name||w.type||'Workout'}${w.duration?' · '+w.duration+'min':''}</div>
+              ${w.kcalActual?`<div style="font-size:12px;font-weight:700;color:var(--accent);">${w.kcalActual}kcal</div>`:''}
+            </div>`).join('')}
+        </div>` : ''}
+        ${target ? `<div style="display:flex;gap:6px;">
+            ${[['P',consumed.protein,target.protein,'var(--teal)'],
+               ['C',consumed.carbs,target.carbs,'var(--amber)'],
+               ['F',consumed.fat,target.fat,'var(--purple)']].map(([l,c,t,col])=>`
+              <div style="flex:1;">
+                <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:3px;">
+                  <div style="width:${Math.min(100,Math.round(c/t*100))}%;height:100%;
+                    background:${col};border-radius:2px;transition:width 0.5s;"></div>
+                </div>
+                <div style="font-size:10px;color:var(--subtle);font-weight:600;">${l} ${c}g</div>
+              </div>`).join('')}
+          </div>` : `<div style="font-size:12px;color:var(--subtle);text-align:center;padding:4px 0;">
+            Set up Fuel tab to see macro targets</div>`}
+        </div>
+      </div>
+
+      <!-- Steps + burned input row -->
+      <div style="display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);align-items:center;">
+        <button onclick="openHealthSetup()"
+          style="flex-shrink:0;width:36px;height:36px;border-radius:10px;
+          background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.25);
+          cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">
+          ❤️
+        </button>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--card2);
+          border-radius:10px;padding:10px 12px;">
+          <span style="font-size:18px;">👟</span>
+          <div style="flex:1;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+              color:var(--subtle);">Steps</div>
+            <input id="today-steps" type="number" placeholder="0"
+              value="${activity.steps||''}"
+              onchange="saveTodayMetric('steps',this.value)"
+              style="background:none;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;
+              font-size:20px;font-weight:700;color:var(--ink);width:100%;padding:0;">
+          </div>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--card2);
+          border-radius:10px;padding:10px 12px;">
+          <span style="font-size:18px;">🔥</span>
+          <div style="flex:1;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+              color:var(--subtle);">Burned</div>
+            <input id="today-burned" type="number" placeholder="0"
+              value="${kcalBurned||''}"
+              onchange="saveTodayMetric('kcalBurned',this.value)"
+              style="background:none;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;
+              font-size:20px;font-weight:700;color:${dtColor};width:100%;padding:0;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Today's session block ── -->
+    <div class="today-block" id="block-session"
+      style="border-color:var(--border);">
+      <div class="today-block-header" onclick="toggleBlock('session')" style="padding:18px 20px;">
+        <div class="today-block-num" style="background:${dtColor}15;color:${dtColor};">
+          ${isTrain ? '⚡' : '🌙'}</div>
+        <div class="today-block-info">
+          <div class="today-block-title">${isTrain ? "Today's Training" : "Recovery Day"}</div>
+          <div class="today-block-sub">
+            ${workouts.length
+              ? workouts.map(w=>w.name||w.type||'Session').join(' · ')
+              : isTrain ? 'Tap to log or plan' : 'Light movement · rehab · rest'}
+          </div>
+        </div>
+        <div style="font-size:16px;">${workouts.length ? '✓' : '›'}</div>
+      </div>
+      <div class="today-block-body hidden" id="body-session">
+        ${workouts.length ? `
+        <div style="margin-bottom:12px;">
+          ${workouts.map(w=>{
+            const t = SESSION_TYPES ? SESSION_TYPES.find(t=>t.id===w.type) : null;
+            const col = t ? t.color : 'var(--accent)';
+            return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;
+              border-bottom:1px solid var(--border);">
+              <div style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;color:var(--ink);">${w.name||w.type||'Session'}</div>
+                <div style="font-size:12px;color:var(--subtle);">
+                  ${w.duration?w.duration+' min':''}
+                  ${w.kcalActual?' · '+w.kcalActual+' kcal':''}
+                  ${w.score?' · '+w.score:''}
+                </div>
+              </div>
+              <button onclick="openLogDetail('${w.id}')"
+                style="padding:6px 12px;background:var(--card2);border:1px solid var(--border);
+                border-radius:8px;color:var(--mid);font-size:12px;font-weight:600;cursor:pointer;">Edit</button>
+            </div>`;
+          }).join('')}
+        </div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <button onclick="openLogEntry()" class="start-block-btn"
+            style="background:linear-gradient(135deg,var(--accent),#a8733a);border:none;">
+            + Log Workout
+          </button>
+          <button onclick="showTab('train')" class="start-block-btn"
+            style="background:var(--card2);color:var(--ink2);border:1.5px solid var(--border2);
+            box-shadow:none;">
+            Start Session →
+          </button>
+        </div>
+        <button onclick="openGPSTracker('cycling')"
+          style="width:100%;padding:12px;background:var(--card2);border:1.5px solid var(--border2);
+          border-radius:12px;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">
+          📍 Track GPS Activity (cycling / walk / run)
+        </button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="showRehabModule('mobility')"
+            style="flex:1;padding:11px;background:var(--card2);border:1px solid var(--border);
+            border-radius:11px;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;">
+            🌅 Mobility
+          </button>
+          <button onclick="showRehabModule('bulletproof')"
+            style="flex:1;padding:11px;background:var(--card2);border:1px solid var(--border);
+            border-radius:11px;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;">
+            🛡 Bulletproof
+          </button>
+          <button onclick="showTab('rehab')"
+            style="flex:1;padding:11px;background:var(--card2);border:1px solid var(--border);
+            border-radius:11px;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;">
+            🩺 Rehab
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mobility block ── -->
+    <div class="today-block" id="block-warmup">
+      <div class="today-block-header" onclick="toggleBlock('warmup')">
+        <div class="today-block-num" style="background:#c47a4518;color:#c47a45;">1</div>
+        <div class="today-block-info">
+          <div class="today-block-title">Mobility Warm-up</div>
+          <div class="today-block-sub">Full body flow · 5–8 min · 8 movements</div>
+        </div>
+        <div class="today-block-status" id="status-warmup">${STATE.blocksDone.warmup?'✓':'›'}</div>
+      </div>
+      <div class="today-block-body hidden" id="body-warmup">
+        <div id="warmup-exercises"></div>
+        <button class="start-block-btn" onclick="markBlockDone('warmup')"> Mark Complete ✓</button>
+      </div>
+    </div>
+
+    <!-- ── Cool-down block ── -->
+    <div class="today-block" id="block-cooldown">
+      <div class="today-block-header" onclick="toggleBlock('cooldown')">
+        <div class="today-block-num" style="background:#9b8fc418;color:#9b8fc4;">2</div>
+        <div class="today-block-info">
+          <div class="today-block-title">Cool-down</div>
+          <div class="today-block-sub">Targeted stretches · 5–8 min</div>
+        </div>
+        <div class="today-block-status" id="status-cooldown">${STATE.blocksDone.cooldown?'✓':'›'}</div>
+      </div>
+      <div class="today-block-body hidden" id="body-cooldown">
+        <div id="cooldown-exercises"></div>
+        <button class="start-block-btn" onclick="markBlockDone('cooldown')"> Mark Complete ✓</button>
+      </div>
+    </div>
+
+  `;
+
+  // Populate exercise cards
+  const wuHTML = MOBILITY_FLOW.map(ex => renderExCard(ex, '#c47a45', 0)).join('');
+  const wuEl = document.getElementById('warmup-exercises');
+  if (wuEl) wuEl.innerHTML = wuHTML;
+
+  const cdHTML = COOL_DOWN.map(ex => renderExCard(ex, '#9b8fc4', 0)).join('');
+  const cdEl = document.getElementById('cooldown-exercises');
+  if (cdEl) cdEl.innerHTML = cdHTML;
+
+  updateAvatar();
 }
 
-function renderTodayWorkoutPreview() {
- const preview = document.getElementById('today-workout-preview');
- const sub = document.getElementById('workout-block-sub');
- if (!preview) return;
- preview.innerHTML = `
- <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
- <button class="pill active" onclick="setTodayWorkout('skills')"> Skills</button>
- <button class="pill" onclick="setTodayWorkout('strength')"> Strength</button>
- <button class="pill" onclick="setTodayWorkout('handstand')"> Handstand</button>
- <button class="pill" onclick="setTodayWorkout('conditioning')"> Conditioning</button>
- </div>
- <div style="font-size:14px;color:var(--mid);">Tap a type above, then go to Train.</div>
- `;
+// ── Today interaction handlers ────────────────────────────────────
+function setTodayType(type) {
+  setDayOverride(todayKey(), type);
+  renderToday();
 }
 
-function setTodayWorkout(type) {
- STATE.workoutType = type;
- const names = { skills:'Skill Session', strength:'Strength', handstand:'Handstand', conditioning:'Conditioning' };
- document.getElementById('workout-block-title').textContent = names[type] || 'Workout';
- document.getElementById('workout-block-sub').textContent = `${names[type]} · ${WORKOUT_TEMPLATES[type].length} exercises`;
+function setWeekDayOverride(dk) {
+  const current = isTrainingDay(dk) ? 'training' : 'rest';
+  setDayOverride(dk, current === 'training' ? 'rest' : 'training');
+  renderToday();
+}
+
+function saveTodayMetric(key, val) {
+  const activity = getTodayActivity();
+  activity[key] = Number(val) || 0;
+  saveTodayActivity(activity);
+  renderToday();
 }
 
 function toggleBlock(name) {
@@ -2497,47 +2795,109 @@ function toggleBlock(name) {
   const block = document.getElementById('block-' + name);
   if (!body) return;
   const isOpen = body.classList.contains('hidden');
-  body.classList.toggle('hidden');
-  // Apply accent border + glow when expanded
+  // Collapse all other blocks
+  ['session','warmup','cooldown'].forEach(n => {
+    if (n !== name) {
+      const b = document.getElementById('body-' + n);
+      const bl = document.getElementById('block-' + n);
+      if (b && !b.classList.contains('hidden')) {
+        b.classList.add('hidden');
+        if (bl) { bl.style.borderColor='var(--border)'; bl.style.boxShadow='none'; }
+      }
+    }
+  });
+  body.classList.toggle('hidden', !isOpen);
+  const dayType = todayDayType();
   const colors = {
-    warmup:   'var(--accent)',
-    prep:     'var(--knee)',
-    workout:  'var(--accent)',
-    cooldown: 'var(--shoulder)',
+    session:  dayType==='training'?'var(--accent)':'#7b9fb8',
+    warmup:   '#c47a45',
+    cooldown: '#9b8fc4',
   };
   const col = colors[name] || 'var(--accent)';
   if (block) {
     block.style.borderColor  = isOpen ? col : 'var(--border)';
-    block.style.boxShadow    = isOpen ? '0 4px 24px ' + col + '22' : 'none';
+    block.style.boxShadow    = isOpen ? '0 4px 24px '+col+'22' : 'none';
   }
 }
 
 function markBlockDone(name) {
- STATE.blocksDone[name] = true;
- const el = document.getElementById('status-' + name);
- if (el) el.textContent = '';
- const body = document.getElementById('body-' + name);
- if (body) body.classList.add('hidden');
-
- // Check all done
- const allDone = Object.values(STATE.blocksDone).every(Boolean);
- if (allDone) {
- document.getElementById('session-complete-banner').classList.remove('hidden');
- logSession();
- }
- saveState();
+  STATE.blocksDone[name] = true;
+  const el = document.getElementById('status-' + name);
+  if (el) el.textContent = '✓';
+  const body = document.getElementById('body-' + name);
+  if (body) body.classList.add('hidden');
+  const block = document.getElementById('block-' + name);
+  if (block) { block.style.borderColor='var(--green)'; block.style.boxShadow='none'; }
+  saveState();
 }
 
-function logSession() {
- const now = new Date();
- STATE.sessionLog.unshift({
- date: now.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' }),
- type: STATE.workoutType || 'full',
- blocks: Object.keys(STATE.blocksDone).filter(k => STATE.blocksDone[k]),
- timestamp: now.getTime(),
- });
- saveState();
+function setTodayWorkout(type) {
+  STATE.workoutType = type;
 }
+
+// ── Weekly pattern editor (opens from Settings or profile) ────────
+function openWeeklyPatternEditor() {
+  const p = getProfile();
+  const pattern = p.trainingDays || [1,2,4,5,6];
+  const dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dayNums   = [1,2,3,4,5,6,0]; // Mon=1...Sun=0
+
+  const ovl = document.createElement('div');
+  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(8px);';
+
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;margin:0 auto;padding:24px 20px calc(var(--safe-bottom)+24px);';
+
+  let current = [...pattern];
+
+  function renderSheet() {
+    sheet.innerHTML = `
+      <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;
+        color:var(--ink);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Weekly Pattern</div>
+      <div style="font-size:14px;color:var(--mid);margin-bottom:20px;">
+        Tap days to set your default training schedule. Override any day from the Today tab.</div>
+      <div style="display:flex;gap:8px;margin-bottom:24px;">
+        ${dayLabels.map((l,i)=>{
+          const num = dayNums[i];
+          const on  = current.includes(num);
+          return `<button onclick="_wpToggle(${num})"
+            style="flex:1;padding:12px 4px;border-radius:12px;
+            border:1.5px solid ${on?'var(--accent)':'var(--border2)'};
+            background:${on?'var(--accent-light)':'var(--card2)'};
+            color:${on?'var(--accent)':'var(--subtle)'};
+            font-size:13px;font-weight:700;cursor:pointer;">${l}</button>`;
+        }).join('')}
+      </div>
+      <div style="font-size:13px;color:var(--subtle);margin-bottom:20px;text-align:center;">
+        ${current.length} training day${current.length!==1?'s':''} per week
+      </div>
+      <button onclick="_wpSave()"
+        style="width:100%;padding:16px;background:linear-gradient(135deg,var(--accent),#a8733a);
+        color:#0a0a08;border:none;border-radius:13px;font-size:16px;font-weight:700;cursor:pointer;">
+        Save Pattern
+      </button>`;
+
+    window._wpToggle = (num) => {
+      current = current.includes(num) ? current.filter(n=>n!==num) : [...current,num];
+      renderSheet();
+    };
+    window._wpSave = () => {
+      const prof = getProfile();
+      prof.trainingDays = current;
+      saveProfile(prof);
+      ovl.remove();
+      renderToday();
+    };
+  }
+
+  renderSheet();
+  sheet.insertAdjacentHTML('afterbegin','');
+  ovl.appendChild(sheet);
+  document.body.appendChild(ovl);
+  ovl.onclick = e => { if(e.target===ovl) ovl.remove(); };
+}
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // REHAB MODULE SYSTEM
@@ -3342,6 +3702,517 @@ function runInferenceCheck(silent) {
   });
   if (newOnes.length) applyInferredAchievements(newOnes, silent);
   return newOnes.length;
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// GPS ACTIVITY TRACKER
+// ═══════════════════════════════════════════════════════════════
+
+const GPS_ACTIVITY = {
+  watchId: null,
+  positions: [],
+  startTime: null,
+  lastPos: null,
+  totalDistance: 0,   // metres
+  currentSpeed: 0,    // km/h
+  maxSpeed: 0,
+  classifiedAs: null, // 'walking','cycling','car','stationary'
+  paused: false,
+  pausedAt: null,
+  totalPausedMs: 0,
+};
+
+// Speed thresholds (km/h)
+const GPS_THRESHOLDS = {
+  stationary: 1.5,
+  walkMax: 7.5,
+  cycleMax: 45,
+  carMin: 50,        // above this = car, discard segment
+};
+
+function classifySpeed(kmh) {
+  if (kmh < GPS_THRESHOLDS.stationary) return 'stationary';
+  if (kmh <= GPS_THRESHOLDS.walkMax)   return 'walking';
+  if (kmh <= GPS_THRESHOLDS.cycleMax)  return 'cycling';
+  return 'car';
+}
+
+function haversineMetres(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function gpsKcalEstimate(activityType, durationMin, weightKg, distanceKm) {
+  // MET values: walking 3.5, cycling 7.5, running 9.8
+  const mets = { walking:3.5, cycling:7.5, running:9.0, stationary:1.2 };
+  const met = mets[activityType] || 5;
+  // Also factor distance for cardio accuracy
+  const byTime = met * weightKg * (durationMin / 60);
+  // Cross-check with distance-based (for cycling: ~35 kcal/km at moderate effort)
+  const distFactor = { cycling: 35, walking: 60, running: 75 };
+  const byDist = distanceKm > 0 ? distanceKm * (distFactor[activityType] || 50) : null;
+  return Math.round(byDist ? (byTime * 0.4 + byDist * 0.6) : byTime);
+}
+
+function openGPSTracker(initialType) {
+  if (GPS_ACTIVITY.watchId) { alert('A tracking session is already active.'); return; }
+
+  // Request location permission first
+  if (!navigator.geolocation) {
+    alert('GPS not available on this device.');
+    return;
+  }
+
+  // Reset state
+  Object.assign(GPS_ACTIVITY, {
+    watchId:null, positions:[], startTime:null, lastPos:null,
+    totalDistance:0, currentSpeed:0, maxSpeed:0,
+    classifiedAs: initialType || null, paused:false,
+    pausedAt:null, totalPausedMs:0,
+  });
+
+  const ovl = document.createElement('div');
+  ovl.id = 'gps-tracker-overlay';
+  ovl.style.cssText = 'position:fixed;inset:0;z-index:600;background:var(--bg);display:flex;flex-direction:column;';
+
+  let manualType = initialType || 'cycling';
+
+  function elapsedMs() {
+    if (!GPS_ACTIVITY.startTime) return 0;
+    const raw = Date.now() - GPS_ACTIVITY.startTime - GPS_ACTIVITY.totalPausedMs;
+    return GPS_ACTIVITY.paused ? raw - (Date.now() - GPS_ACTIVITY.pausedAt) : raw;
+  }
+
+  function formatTime(ms) {
+    const s = Math.floor(ms/1000);
+    const m = Math.floor(s/60), ss = s%60;
+    const h = Math.floor(m/60), mm = m%60;
+    return h > 0 ? `${h}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
+                 : `${m}:${String(ss).padStart(2,'0')}`;
+  }
+
+  let renderTimer = null;
+
+  function renderTracker() {
+    const elapsed = elapsedMs();
+    const distKm = (GPS_ACTIVITY.totalDistance / 1000).toFixed(2);
+    const speed = GPS_ACTIVITY.currentSpeed.toFixed(1);
+    const p = getProfile();
+    const weight = p.weight || 75;
+    const activity = GPS_ACTIVITY.classifiedAs || manualType;
+    const kcal = GPS_ACTIVITY.startTime
+      ? gpsKcalEstimate(activity, elapsed/60000, weight, parseFloat(distKm))
+      : 0;
+
+    const actColors = { walking:'#5aab8e', cycling:'var(--accent)', running:'#6497b8', car:'#b86a5e', stationary:'var(--subtle)' };
+    const col = actColors[activity] || 'var(--accent)';
+
+    const isActive = !!GPS_ACTIVITY.startTime && !GPS_ACTIVITY.paused;
+    const hasStarted = !!GPS_ACTIVITY.startTime;
+
+    ovl.innerHTML = `
+      <!-- Header -->
+      <div style="background:var(--bg2);border-bottom:1px solid var(--border);
+        padding:calc(var(--safe-top) + 14px) 20px 14px;display:flex;align-items:center;gap:12px;">
+        <button onclick="stopGPSTracker(true)"
+          style="width:36px;height:36px;border-radius:10px;background:var(--card2);
+          border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:18px;">←</button>
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;
+            color:var(--subtle);">GPS Tracker</div>
+          <div style="font-size:17px;font-weight:700;color:var(--ink);">
+            ${activity.charAt(0).toUpperCase()+activity.slice(1)}
+            ${GPS_ACTIVITY.classifiedAs && GPS_ACTIVITY.classifiedAs!==manualType
+              ? '<span style="font-size:12px;color:var(--subtle);"> (auto-detected)</span>' : ''}
+          </div>
+        </div>
+        ${isActive ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;"></div>' : ''}
+      </div>
+
+      <!-- Activity type selector (pre-start) -->
+      ${!hasStarted ? `
+      <div style="padding:20px 20px 0;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+          color:var(--subtle);margin-bottom:10px;">Activity</div>
+        <div style="display:flex;gap:8px;margin-bottom:4px;">
+          ${[['cycling','🚴','Cycling'],['walking','🚶','Walking'],['running','🏃','Running']].map(([id,ic,lb])=>`
+            <button onclick="document.getElementById('gps-type-${id}') && (manualType='${id}') && renderTracker()"
+              id="gps-type-${id}"
+              style="flex:1;padding:14px 8px;border-radius:13px;
+              border:1.5px solid ${manualType===id?col:'var(--border2)'};
+              background:${manualType===id?col+'18':'var(--card2)'};cursor:pointer;text-align:center;">
+              <div style="font-size:24px;">${ic}</div>
+              <div style="font-size:12px;font-weight:600;color:${manualType===id?col:'var(--mid)'};">${lb}</div>
+            </button>`).join('')}
+        </div>
+        <div style="font-size:11px;color:var(--subtle);text-align:center;margin-top:8px;">
+          Car journeys (>50 km/h) are automatically excluded
+        </div>
+      </div>` : ''}
+
+      <!-- Main stats -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;
+        justify-content:center;padding:20px;gap:20px;">
+
+        <!-- Time -->
+        <div style="text-align:center;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:700;
+            color:var(--ink);line-height:1;letter-spacing:-0.02em;">${formatTime(elapsed)}</div>
+          <div style="font-size:12px;color:var(--subtle);margin-top:4px;font-weight:600;
+            text-transform:uppercase;letter-spacing:0.1em;">Duration</div>
+        </div>
+
+        <!-- Stat grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:340px;">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;
+            padding:14px;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;
+              color:${col};">${distKm}</div>
+            <div style="font-size:10px;color:var(--subtle);font-weight:600;">KM</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;
+            padding:14px;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;
+              color:${col};">${speed}</div>
+            <div style="font-size:10px;color:var(--subtle);font-weight:600;">KM/H</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;
+            padding:14px;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;
+              color:${col};">${kcal}</div>
+            <div style="font-size:10px;color:var(--subtle);font-weight:600;">KCAL</div>
+          </div>
+        </div>
+
+        ${hasStarted && GPS_ACTIVITY.positions.length > 0 ? `
+        <div style="font-size:12px;color:var(--subtle);text-align:center;">
+          Max speed: ${GPS_ACTIVITY.maxSpeed.toFixed(1)} km/h ·
+          ${GPS_ACTIVITY.positions.length} GPS points
+        </div>` : ''}
+      </div>
+
+      <!-- Controls -->
+      <div style="padding:20px;padding-bottom:calc(var(--safe-bottom) + 20px);">
+        ${!hasStarted ? `
+          <button onclick="startGPSTracking()"
+            style="width:100%;padding:20px;background:linear-gradient(135deg,${col},${col}cc);
+            color:#0a0a08;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;">
+            Start ${manualType.charAt(0).toUpperCase()+manualType.slice(1)} →
+          </button>` :
+        GPS_ACTIVITY.paused ? `
+          <div style="display:flex;gap:10px;">
+            <button onclick="resumeGPSTracking()"
+              style="flex:2;padding:18px;background:linear-gradient(135deg,${col},${col}cc);
+              color:#0a0a08;border:none;border-radius:16px;font-size:17px;font-weight:700;cursor:pointer;">
+              ▶ Resume
+            </button>
+            <button onclick="stopGPSTracker(false)"
+              style="flex:1;padding:18px;background:var(--card);border:1.5px solid var(--border2);
+              border-radius:16px;color:var(--ink);font-size:17px;font-weight:700;cursor:pointer;">
+              ■ Finish
+            </button>
+          </div>` : `
+          <div style="display:flex;gap:10px;">
+            <button onclick="pauseGPSTracking()"
+              style="flex:1;padding:18px;background:var(--card);border:1.5px solid var(--border2);
+              border-radius:16px;color:var(--ink);font-size:17px;font-weight:700;cursor:pointer;">
+              ⏸ Pause
+            </button>
+            <button onclick="stopGPSTracker(false)"
+              style="flex:1;padding:18px;background:linear-gradient(135deg,#b86a5e,#a05448);
+              color:#fff;border:none;border-radius:16px;font-size:17px;font-weight:700;cursor:pointer;">
+              ■ Stop & Save
+            </button>
+          </div>`}
+      </div>`;
+
+    // Bind type buttons after render
+    ['cycling','walking','running'].forEach(id => {
+      const btn = ovl.querySelector('#gps-type-'+id);
+      if (btn) btn.onclick = () => { manualType = id; renderTracker(); };
+    });
+  }
+
+  window.startGPSTracking = function() {
+    GPS_ACTIVITY.startTime = Date.now();
+    GPS_ACTIVITY.classifiedAs = manualType;
+
+    GPS_ACTIVITY.watchId = navigator.geolocation.watchPosition(
+      pos => {
+        if (GPS_ACTIVITY.paused) return;
+        const { latitude: lat, longitude: lon, speed } = pos.coords;
+        const speedKmh = speed ? speed * 3.6 : 0;
+
+        // Classify and filter
+        const cls = classifySpeed(speedKmh);
+        if (cls === 'car') return; // discard car movement
+
+        if (GPS_ACTIVITY.lastPos) {
+          const d = haversineMetres(GPS_ACTIVITY.lastPos.lat, GPS_ACTIVITY.lastPos.lon, lat, lon);
+          if (d > 1) GPS_ACTIVITY.totalDistance += d; // ignore GPS jitter <1m
+        }
+
+        GPS_ACTIVITY.lastPos = { lat, lon };
+        GPS_ACTIVITY.currentSpeed = speedKmh;
+        if (speedKmh > GPS_ACTIVITY.maxSpeed) GPS_ACTIVITY.maxSpeed = speedKmh;
+
+        // Auto-classify after enough movement
+        if (GPS_ACTIVITY.totalDistance > 200) {
+          GPS_ACTIVITY.classifiedAs = cls !== 'stationary' ? cls : GPS_ACTIVITY.classifiedAs;
+        }
+
+        GPS_ACTIVITY.positions.push({ lat, lon, t: Date.now(), s: speedKmh });
+        renderTracker();
+      },
+      err => {
+        console.warn('GPS error:', err.message);
+        GPS_ACTIVITY.currentSpeed = 0;
+        renderTracker();
+      },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 5000 }
+    );
+
+    // UI update timer (even when GPS is slow)
+    renderTimer = setInterval(renderTracker, 1000);
+    renderTracker();
+  };
+
+  window.pauseGPSTracking = function() {
+    GPS_ACTIVITY.paused = true;
+    GPS_ACTIVITY.pausedAt = Date.now();
+    GPS_ACTIVITY.currentSpeed = 0;
+    if (GPS_ACTIVITY.watchId) {
+      navigator.geolocation.clearWatch(GPS_ACTIVITY.watchId);
+      GPS_ACTIVITY.watchId = null;
+    }
+    renderTracker();
+  };
+
+  window.resumeGPSTracking = function() {
+    GPS_ACTIVITY.totalPausedMs += Date.now() - GPS_ACTIVITY.pausedAt;
+    GPS_ACTIVITY.paused = false;
+    GPS_ACTIVITY.pausedAt = null;
+    window.startGPSTracking && startGPSTracking();
+  };
+
+  window.stopGPSTracker = function(cancel) {
+    if (renderTimer) { clearInterval(renderTimer); renderTimer = null; }
+    if (GPS_ACTIVITY.watchId) {
+      navigator.geolocation.clearWatch(GPS_ACTIVITY.watchId);
+      GPS_ACTIVITY.watchId = null;
+    }
+    ovl.remove();
+    if (cancel || !GPS_ACTIVITY.startTime) return;
+
+    // Save to log
+    const elapsed = elapsedMs();
+    const distKm  = GPS_ACTIVITY.totalDistance / 1000;
+    const p       = getProfile();
+    const weight  = p.weight || 75;
+    const activity= GPS_ACTIVITY.classifiedAs || manualType;
+    const kcal    = gpsKcalEstimate(activity, elapsed/60000, weight, distKm);
+
+    const entry = {
+      id: Date.now(),
+      ts: GPS_ACTIVITY.startTime,
+      type: 'cardio',
+      name: activity.charAt(0).toUpperCase() + activity.slice(1),
+      date: new Date(GPS_ACTIVITY.startTime).toLocaleDateString('en-GB',
+        {weekday:'short',day:'numeric',month:'short',year:'numeric'}),
+      duration: Math.round(elapsed/60000),
+      scoreType: 'dist',
+      score: distKm.toFixed(2) + ' km',
+      note: `Max speed: ${GPS_ACTIVITY.maxSpeed.toFixed(1)} km/h · ${GPS_ACTIVITY.positions.length} GPS points`,
+      kcalActual: kcal,
+      kcalEstimated: kcal,
+      tags: [],
+      exercises: [],
+      workoutText: `${distKm.toFixed(2)}km ${activity} in ${Math.round(elapsed/60000)} min`,
+    };
+
+    const log = getSessionLog();
+    log.unshift(entry);
+    saveSessionLog(log);
+
+    // Also update today's burned kcal
+    const todayAct = getTodayActivity();
+    todayAct.kcalBurned = (todayAct.kcalBurned || 0) + kcal;
+    saveTodayActivity(todayAct);
+
+    // Show summary
+    showGPSSummary(entry, activity);
+  };
+
+  renderTracker();
+  document.body.appendChild(ovl);
+}
+
+function showGPSSummary(entry, activity) {
+  const actColors = {walking:'#5aab8e', cycling:'var(--accent)', running:'#6497b8'};
+  const col = actColors[activity] || 'var(--accent)';
+  const ovl = document.createElement('div');
+  ovl.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.85);display:flex;align-items:flex-end;backdrop-filter:blur(8px);';
+  ovl.innerHTML = `
+    <div style="background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;
+      margin:0 auto;padding:28px 20px calc(var(--safe-bottom)+28px);">
+      <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 24px;"></div>
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:48px;margin-bottom:8px;">✓</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:700;
+          color:${col};text-transform:uppercase;letter-spacing:0.04em;">${entry.name} Complete</div>
+        <div style="font-size:14px;color:var(--mid);margin-top:4px;">Saved to your log</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:24px;">
+        ${[
+          ['Distance', entry.score, ''],
+          ['Duration', entry.duration + ' min', ''],
+          ['Calories', entry.kcalActual + ' kcal', ''],
+        ].map(([l,v])=>`
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;
+            padding:14px;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;
+              color:${col};">${v}</div>
+            <div style="font-size:11px;color:var(--subtle);margin-top:2px;">${l}</div>
+          </div>`).join('')}
+      </div>
+      <button onclick="this.closest('div[style*=inset]').remove();showTab('today');renderToday();"
+        style="width:100%;padding:17px;background:linear-gradient(135deg,${col},${col}cc);
+        color:#0a0a08;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">
+        Back to Today
+      </button>
+    </div>`;
+  ovl.onclick = e => { if(e.target===ovl){ ovl.remove(); renderToday(); } };
+  document.body.appendChild(ovl);
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// APPLE HEALTH / SHORTCUTS BRIDGE
+// ═══════════════════════════════════════════════════════════════
+
+function handleHealthURLParams() {
+  // Called on page load — checks for ?steps=X&kcal=Y&distance=Z params
+  // These are written by the ATLAS Apple Shortcut
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const steps    = params.get('steps');
+    const kcal     = params.get('kcal');
+    const distance = params.get('distance');
+    const date     = params.get('date') || todayKey();
+
+    if (!steps && !kcal && !distance) return;
+
+    const key = 'atlas_activity_' + date;
+    const existing = JSON.parse(localStorage.getItem(key) || '{}');
+    if (steps)    existing.steps        = parseInt(steps);
+    if (kcal)     existing.kcalBurned   = parseInt(kcal);
+    if (distance) existing.distanceKm   = parseFloat(distance);
+    localStorage.setItem(key, JSON.stringify(existing));
+
+    // Clean the URL without reloading
+    const clean = window.location.pathname;
+    window.history.replaceState({}, '', clean);
+
+    // Show brief confirmation
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:calc(var(--safe-top)+12px);left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--green)40;border-radius:99px;padding:10px 18px;font-size:13px;font-weight:600;color:var(--green);z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+    toast.textContent = '✓ Health data synced' + (steps ? ' · ' + parseInt(steps).toLocaleString() + ' steps' : '');
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  } catch(e) {
+    console.warn('Health URL parse failed:', e);
+  }
+}
+
+function openHealthSetup() {
+  const appURL = 'https://atlas-shrugged.netlify.app/';
+
+  const ovl = document.createElement('div');
+  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(8px);';
+
+  ovl.innerHTML = `
+    <div style="background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;
+      margin:0 auto;max-height:90vh;overflow-y:auto;padding:24px 20px calc(var(--safe-bottom)+24px);">
+      <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 20px;"></div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+        <span style="font-size:32px;">❤️</span>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;
+            color:var(--ink);text-transform:uppercase;letter-spacing:0.04em;">Apple Health</div>
+          <div style="font-size:13px;color:var(--mid);">One-time setup · 3 minutes</div>
+        </div>
+      </div>
+
+      <div style="font-size:14px;color:var(--mid);line-height:1.65;margin-bottom:20px;">
+        Apple Health data can't be accessed directly from a web app. The workaround is a free
+        <strong style="color:var(--ink);">Apple Shortcut</strong> that reads your Health data
+        and sends it to ATLAS automatically.
+      </div>
+
+      <!-- Steps -->
+      ${[
+        ['1', 'Open the Shortcuts app', 'Already on your iPhone. Search for it if needed.'],
+        ['2', 'Create a new Shortcut', 'Tap the + button in the top right.'],
+        ['3', 'Add action: Get Health Sample', 'Search "Health" → select "Find Health Samples". Set Type to "Steps", Sort by "Start Date" descending, Limit to 1.'],
+        ['4', 'Add action: Get active energy', 'Add another "Find Health Samples". Set Type to "Active Energy Burned", same settings.'],
+        ['5', 'Add action: Open URL', `Add "Open URLs" action. Set the URL to:\n${appURL}?steps=[Steps Value]&kcal=[Energy Value]&date=[Current Date]\n\nUse the variable picker to insert the values from steps 3 and 4.`],
+        ['6', 'Set automation', 'Go to Automation tab → Create Personal Automation → Time of Day → set to 9:00 AM daily → add your shortcut → turn off "Ask Before Running".'],
+      ].map(([n,title,body])=>`
+        <div style="display:flex;gap:12px;margin-bottom:16px;">
+          <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-light);
+            border:1px solid var(--accent)30;display:flex;align-items:center;justify-content:center;
+            font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0;margin-top:1px;">${n}</div>
+          <div>
+            <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:3px;">${title}</div>
+            <div style="font-size:13px;color:var(--mid);line-height:1.6;white-space:pre-line;">${body}</div>
+          </div>
+        </div>`).join('')}
+
+      <!-- URL template copy -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;
+        padding:14px;margin-bottom:20px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+          color:var(--subtle);margin-bottom:8px;">URL Template</div>
+        <div style="font-size:12px;color:var(--ink2);font-family:monospace;line-height:1.7;
+          word-break:break-all;">${appURL}?steps=STEPS&kcal=KCAL&date=DATE</div>
+        <button onclick="navigator.clipboard?.writeText('${appURL}?steps=STEPS&kcal=KCAL&date=DATE').then(()=>{this.textContent='Copied ✓';setTimeout(()=>this.textContent='Copy URL template',2000);})"
+          style="margin-top:10px;padding:8px 16px;background:var(--accent-light);border:1px solid var(--accent)30;
+          border-radius:8px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;">
+          Copy URL template
+        </button>
+      </div>
+
+      <!-- Test button -->
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:13px;
+        padding:14px;margin-bottom:20px;">
+        <div style="font-size:13px;color:var(--mid);margin-bottom:10px;line-height:1.5;">
+          <strong style="color:var(--ink2);">Test it manually</strong> — paste this in Safari to simulate the Shortcut with sample data:
+        </div>
+        <div style="font-size:11px;color:var(--ink2);font-family:monospace;word-break:break-all;
+          line-height:1.6;">${appURL}?steps=8432&kcal=340</div>
+        <a href="${appURL}?steps=8432&kcal=340"
+          style="display:inline-block;margin-top:10px;padding:8px 16px;background:var(--card);
+          border:1px solid var(--border2);border-radius:8px;color:var(--mid);font-size:13px;
+          font-weight:600;text-decoration:none;">
+          Test with sample data →
+        </a>
+      </div>
+
+      <button onclick="this.closest('div[style*=inset]').remove()"
+        style="width:100%;padding:15px;background:var(--card2);border:1.5px solid var(--border2);
+        border-radius:13px;color:var(--mid);font-size:15px;font-weight:600;cursor:pointer;">
+        Done
+      </button>
+    </div>`;
+
+  ovl.onclick = e => { if(e.target===ovl) ovl.remove(); };
+  document.body.appendChild(ovl);
 }
 
 function renderSkills() {
@@ -4516,16 +5387,8 @@ function toDateInput(ts) {
 // INIT
 // ═══════════════════════════════════════════════════════════════════════
 function init() {
- // Set today's date
- const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
- const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
- const now = new Date();
- const dateEl = document.getElementById('today-date');
- if (dateEl) dateEl.textContent = `${days[now.getDay()].toUpperCase()} · ${now.getDate()} ${months[now.getMonth()].toUpperCase()} ${now.getFullYear()}`;
-
- // Render initial screens
- renderToday();
- renderRehabDashboard();
+  renderToday();
+  renderRehabDashboard();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5671,6 +6534,14 @@ function openSettings(){
   nutBox.appendChild(editNut);
   sheet.appendChild(nutBox);
 
+  // Training schedule
+  sheet.appendChild(lbl('Training Schedule'));
+  const patBtn = document.createElement('button');
+  patBtn.style.cssText = 'display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:13px;cursor:pointer;font-family:Outfit,sans-serif;margin-bottom:16px;';
+  patBtn.innerHTML = '<span style="font-size:15px;font-weight:500;color:var(--ink);">Weekly training pattern</span><span style="font-size:13px;color:var(--subtle);">Edit →</span>';
+  patBtn.onclick = () => { ovl.remove(); openWeeklyPatternEditor(); };
+  sheet.appendChild(patBtn);
+
   // Language
   sheet.appendChild(lbl('Language'));
   const langWrap = document.createElement('div');
@@ -5813,6 +6684,7 @@ function injectTabIcons() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  handleHealthURLParams(); // Process ?steps=X&kcal=Y from Shortcuts bridge
   init();
   applyLang();
   injectTabIcons();
