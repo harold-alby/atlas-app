@@ -2656,12 +2656,27 @@ function renderToday() {
       </div>
     </div>
 
+    <!-- ── Mobility block ── -->
+    <div class="today-block" id="block-warmup">
+      <div class="today-block-header" onclick="toggleBlock('warmup')">
+        <div class="today-block-num" style="background:#c47a4518;color:#c47a45;">1</div>
+        <div class="today-block-info">
+          <div class="today-block-title">Mobility Warm-up</div>
+          <div class="today-block-sub">Full body flow · 5–8 min · 8 movements</div>
+        </div>
+        <div class="today-block-status" id="status-warmup">${STATE.blocksDone.warmup?'✓':'›'}</div>
+      </div>
+      <div class="today-block-body hidden" id="body-warmup">
+        <div id="warmup-exercises"></div>
+        <button class="start-block-btn" onclick="markBlockDone('warmup')"> Mark Complete ✓</button>
+      </div>
+    </div>
+
     <!-- ── Today's session block ── -->
     <div class="today-block" id="block-session"
       style="border-color:var(--border);">
       <div class="today-block-header" onclick="toggleBlock('session')" style="padding:18px 20px;">
-        <div class="today-block-num" style="background:${dtColor}15;color:${dtColor};">
-          ${isTrain ? '⚡' : '🌙'}</div>
+        <div class="today-block-num" style="background:${dtColor}15;color:${dtColor};">2</div>
         <div class="today-block-info">
           <div class="today-block-title">${isTrain ? "Today's Training" : "Recovery Day"}</div>
           <div class="today-block-sub">
@@ -2732,26 +2747,10 @@ function renderToday() {
       </div>
     </div>
 
-    <!-- ── Mobility block ── -->
-    <div class="today-block" id="block-warmup">
-      <div class="today-block-header" onclick="toggleBlock('warmup')">
-        <div class="today-block-num" style="background:#c47a4518;color:#c47a45;">1</div>
-        <div class="today-block-info">
-          <div class="today-block-title">Mobility Warm-up</div>
-          <div class="today-block-sub">Full body flow · 5–8 min · 8 movements</div>
-        </div>
-        <div class="today-block-status" id="status-warmup">${STATE.blocksDone.warmup?'✓':'›'}</div>
-      </div>
-      <div class="today-block-body hidden" id="body-warmup">
-        <div id="warmup-exercises"></div>
-        <button class="start-block-btn" onclick="markBlockDone('warmup')"> Mark Complete ✓</button>
-      </div>
-    </div>
-
     <!-- ── Cool-down block ── -->
     <div class="today-block" id="block-cooldown">
       <div class="today-block-header" onclick="toggleBlock('cooldown')">
-        <div class="today-block-num" style="background:#9b8fc418;color:#9b8fc4;">2</div>
+        <div class="today-block-num" style="background:#9b8fc418;color:#9b8fc4;">3</div>
         <div class="today-block-info">
           <div class="today-block-title">Cool-down</div>
           <div class="today-block-sub">Targeted stretches · 5–8 min</div>
