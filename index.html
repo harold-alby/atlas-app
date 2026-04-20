@@ -2463,7 +2463,6 @@ function renderToday() {
   // Day type colour
   const dtColor = isTrain ? 'var(--accent)' : '#7b9fb8';
   const dtLabel = isTrain ? 'Training Day' : 'Rest Day';
-  const dtIcon  = isTrain ? '⚡' : '🌙';
 
   // Weekly pattern row
   const weekDays = [];
@@ -2499,54 +2498,21 @@ function renderToday() {
       </button>
     </div>
 
-    <!-- ── Day type + weekly pattern ── -->
-    <div style="background:var(--card);border:1.5px solid ${dtColor}30;border-radius:18px;
-      padding:16px;margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:20px;">${dtIcon}</span>
-          <div>
-            <div style="font-size:17px;font-weight:700;color:${dtColor};">${dtLabel}</div>
-            <div style="font-size:12px;color:var(--subtle);">Tap a day to override</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button onclick="setTodayType('training')"
-            style="padding:7px 12px;border-radius:99px;border:1.5px solid ${isTrain?'var(--accent)':'var(--border2)'};
-            background:${isTrain?'var(--accent-light)':'transparent'};color:${isTrain?'var(--accent)':'var(--subtle)'};
-            font-size:12px;font-weight:700;cursor:pointer;">Train</button>
-          <button onclick="setTodayType('rest')"
-            style="padding:7px 12px;border-radius:99px;border:1.5px solid ${!isTrain?'#7b9fb8':'var(--border2)'};
-            background:${!isTrain?'rgba(123,159,184,0.12)':'transparent'};color:${!isTrain?'#7b9fb8':'var(--subtle)'};
-            font-size:12px;font-weight:700;cursor:pointer;">Rest</button>
-        </div>
-      </div>
-      <!-- Week strip -->
-      <div style="display:flex;gap:5px;" id="today-week-strip">
-        ${Array.from({length:7},(_,i)=>{
-          const d = new Date(weekStart);
-          d.setDate(weekStart.getDate()+i);
-          const dk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-          const isToday = dk === dateKey;
-          const isTrain = isTrainingDay(dk);
-          const isPast = d < now && !isToday;
-          const todayWorkout = getSessionLog().find(s=>s.ts&&new Date(s.ts).toISOString().slice(0,10)===dk);
-          const dotColor = todayWorkout ? 'var(--green)' : isTrain ? dtColor : 'var(--border2)';
-          return `<button onclick="setWeekDayOverride('${dk}')"
-            style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid ${isToday?dtColor:'var(--border)'};
-            background:${isToday?dtColor+'18':'var(--card2)'};cursor:pointer;text-align:center;">
-            <div style="font-size:10px;font-weight:700;color:${isToday?dtColor:'var(--subtle)'};
-              text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(d.getDay()+6)%7]}</div>
-            <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};
-              margin:0 auto;opacity:${isPast&&!todayWorkout?0.4:1};"></div>
-          </button>`;
-        }).join('')}
-      </div>
-    </div>
-
     <!-- ── Calorie dashboard ── -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;
+    <div style="background:var(--card);border:1.5px solid ${dtColor}20;border-radius:18px;
       padding:18px;margin-bottom:16px;">
+
+      <!-- Day type row — tap to toggle -->
+      <div onclick="setTodayType(todayDayType()==='training'?'rest':'training')"
+        style="display:flex;align-items:center;justify-content:space-between;
+        margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);
+        cursor:pointer;user-select:none;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;
+          color:${dtColor};letter-spacing:0.05em;text-transform:uppercase;">${dtLabel}</div>
+        <div style="font-size:11px;color:var(--subtle);font-weight:600;
+          letter-spacing:0.08em;text-transform:uppercase;">Tap to change</div>
+      </div>
+
       <div style="display:flex;align-items:center;gap:16px;">
 
         <!-- Ring -->
@@ -5105,7 +5071,7 @@ function openLogEntry(existingId) {
           </div>
           ${entry.exercises.map((ex, exIdx) => {
             const hasPrescribed = ex.prescribedWeight && ex.prescribedWeight !== 'null' && ex.prescribedWeight !== 'bodyweight';
-            const sets = ex.sets || ex.detail || '';
+            const sets = ex.scheme || ex.sets || ex.detail || '';
             const prescribed = hasPrescribed ? ex.prescribedWeight : (ex.prescribedWeight === 'bodyweight' ? 'BW' : '—');
             const actual = ex.actualWeight || '';
             return `
@@ -5113,7 +5079,7 @@ function openLogEntry(existingId) {
               <div style="display:flex;align-items:flex-start;gap:10px;">
                 <div style="flex:1;min-width:0;">
                   <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px;">${ex.name}</div>
-                  <div style="font-size:12px;color:var(--mid);">${sets}</div>
+                  <div style="font-size:12px;color:var(--mid);">${ex.scheme || ex.sets || ex.detail || ''}</div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
                   ${hasPrescribed ? `
@@ -5352,7 +5318,6 @@ function openLogEntry(existingId) {
     window._logAnalysePhoto = async function() {
       const key = localStorage.getItem('atlas_api_key');
       if (!key) {
-        // Show API key prompt in a modal rather than the result div
         const rd = document.getElementById('photo-ai-result');
         if (rd) rd.innerHTML = apiKeyPrompt('_logAnalysePhoto()');
         else {
@@ -5363,57 +5328,165 @@ function openLogEntry(existingId) {
         }
         return;
       }
-      // Disable the button and show loading
+
       const analyseBtn = document.getElementById('analyse-btn');
       if (analyseBtn) { analyseBtn.disabled = true; analyseBtn.textContent = '⟳ Reading board…'; }
       const resultDiv = document.getElementById('photo-ai-result');
       if (resultDiv) resultDiv.innerHTML = '';
       const p = getProfile();
+
       try {
         const b64 = entry.photo.split(',')[1];
         const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-api-key':key,
-            'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
           body: JSON.stringify({
             model: 'claude-sonnet-4-6',
-            max_tokens: 600,
-            system: `You are reading a CrossFit or gym whiteboard. Extract the workout and estimate kCal burned.
-The athlete: age ${p.age||40}, weight ${p.weight||80}kg.
-Return ONLY valid JSON, no markdown:
-{"name":"workout name","exercises":[{"name":"exercise","sets":"e.g. 21-15-9 or 5×10","reps":"rep count or scheme","prescribedWeight":"e.g. 43kg or bodyweight or null","unit":"kg or m or cal or s or null","kcal":number}],"kcalEstimated":number,"notes":"any rx/scaling notes"}
-Extract prescribed weights exactly as written on the board. Use null if no weight specified (bodyweight movements). Estimate kcal using prescribed weights and athlete profile. Be conservative.`,
+            max_tokens: 1500,
+            system: `You are an expert at reading CrossFit and gym whiteboards. Your job is to extract workout details with 100% accuracy.
+
+Athlete profile: age ${p.age||40}, weight ${p.weight||80}kg.
+
+INSTRUCTIONS:
+1. Read every piece of text on the board carefully
+2. Identify the workout type (AMRAP, For Time, EMOM, Rounds, etc.)
+3. List EVERY exercise with its EXACT rep scheme as written
+4. Extract prescribed weights EXACTLY as written (e.g. "43kg", "95lb", "24\"")
+5. For bodyweight movements (pull-ups, push-ups, sit-ups, etc.) set prescribedWeight to "bodyweight"
+6. For movements with no weight (run, row, box jump) set prescribedWeight to null
+
+Return ONLY this JSON structure, no markdown, no explanation:
+{
+  "name": "workout name or type (e.g. Fran, AMRAP 20, etc.)",
+  "wodType": "AMRAP/ForTime/EMOM/Rounds/Other",
+  "timeCap": "time cap if shown, else null",
+  "exercises": [
+    {
+      "name": "exact exercise name",
+      "scheme": "EXACT rep/set scheme as written (e.g. 21-15-9, 5 rounds of 10, AMRAP, 400m)",
+      "prescribedWeight": "exact weight as written or bodyweight or null",
+      "unit": "kg or lb or m or cal or null",
+      "kcal": estimated_kcal_for_this_exercise_as_integer
+    }
+  ],
+  "kcalEstimated": total_estimated_kcal_as_integer,
+  "notes": "any rx weights, scaling notes, or other info from the board"
+}`,
             messages: [{
-              role:'user',
-              content: [{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-                        {type:'text',text:'Extract this workout and estimate kCal.'}]
+              role: 'user',
+              content: [
+                {
+                  type: 'image',
+                  source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
+                },
+                {
+                  type: 'text',
+                  text: 'Read this whiteboard carefully. Extract every exercise, every rep number, every weight shown. Be precise — do not guess or round rep schemes.'
+                }
+              ]
             }]
           })
         });
+
         const d = await res.json();
-        if (d.error) throw new Error(d.error.message);
-        const text = d.content[0].text.replace(/```json|```/g,'').trim();
-        const parsed = JSON.parse(text);
-        entry.name = parsed.name || entry.name;
-        entry.exercises = parsed.exercises || [];
+
+        // Always show raw response in debug panel for diagnosis
+        function showDebug(raw, err) {
+          const rd = document.getElementById('photo-ai-result');
+          if (!rd) return;
+          rd.innerHTML = `
+            <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;
+              margin-bottom:10px;overflow:hidden;">
+              <button onclick="this.nextElementSibling.classList.toggle('hidden');this.textContent=this.nextElementSibling.classList.contains('hidden')?'▶ Show raw API response':'▼ Hide raw response'"
+                style="width:100%;padding:10px 12px;background:none;border:none;text-align:left;
+                font-size:11px;font-weight:700;color:${err?'var(--red)':'var(--subtle)'};cursor:pointer;
+                letter-spacing:0.08em;text-transform:uppercase;">
+                ${err ? '✗ Error — ' : ''}▶ Show raw API response
+              </button>
+              <div class="hidden" style="padding:0 12px 12px;max-height:300px;overflow-y:auto;">
+                <pre style="font-size:10px;color:var(--mid);white-space:pre-wrap;word-break:break-all;
+                  line-height:1.5;margin:0;">${raw.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+              </div>
+            </div>`;
+        }
+
+        if (d.error) {
+          showDebug(JSON.stringify(d, null, 2), true);
+          throw new Error(d.error.message);
+        }
+
+        const rawText = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text : '';
+        if (!rawText) {
+          showDebug(JSON.stringify(d, null, 2), true);
+          throw new Error('Empty response — full response shown below');
+        }
+
+        // Always show the raw response so we can debug
+        showDebug(rawText, false);
+
+        // Strip markdown fences if present
+        const cleaned = rawText.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'').trim();
+        let parsed;
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch(parseErr) {
+          const jsonMatch = cleaned.match(/\{[\s\S]+\}/);
+          if (jsonMatch) {
+            try { parsed = JSON.parse(jsonMatch[0]); }
+            catch(e2) { throw new Error('JSON parse failed: ' + parseErr.message); }
+          } else {
+            throw new Error('Not valid JSON. See raw response above.');
+          }
+        }
+
+        // Normalise field names — handle sets/reps/detail → scheme
+        (parsed.exercises || []).forEach(ex => {
+          if (!ex.scheme) ex.scheme = ex.sets || ex.detail || ex.reps || '';
+          // Normalise prescribedWeight
+          if (ex.prescribedWeight === 'null' || ex.prescribedWeight === '') ex.prescribedWeight = null;
+        });
+
+        entry.name          = parsed.name || entry.name;
+        entry.exercises     = parsed.exercises || [];
         entry.kcalEstimated = parsed.kcalEstimated || null;
-        if (parsed.notes) entry.note = (entry.note ? entry.note+'\n' : '') + parsed.notes;
-        // Also populate workout text
-        entry.workoutText = entry.exercises.map(ex => ex.detail ? ex.name+' '+ex.detail : ex.name).join('\n');
-        if (analyseBtn) { analyseBtn.disabled = false; analyseBtn.textContent = '✦ Extract workout from photo'; }
+        if (parsed.wodType) entry.wodType = parsed.wodType;
+        if (parsed.timeCap) entry.timeCap = parsed.timeCap;
+        if (parsed.notes)   entry.note = (entry.note ? entry.note + '\n' : '') + parsed.notes;
+
+        entry.workoutText = entry.exercises
+          .map(ex => [ex.scheme, ex.name,
+            ex.prescribedWeight && ex.prescribedWeight !== 'bodyweight'
+              ? '@ ' + ex.prescribedWeight : ''].filter(Boolean).join(' '))
+          .join('\n');
+
+        if (analyseBtn) { analyseBtn.disabled = false; analyseBtn.textContent = '✦ Re-extract'; }
+
+        // If exercises were extracted, clear the debug panel (success)
+        if (entry.exercises.length > 0) {
+          const rd2 = document.getElementById('photo-ai-result');
+          if (rd2) rd2.innerHTML = '';
+        }
+
         render();
+
       } catch(e) {
         if (analyseBtn) { analyseBtn.disabled = false; analyseBtn.textContent = '✦ Extract workout from photo'; }
         const rd = document.getElementById('photo-ai-result');
         const errMsg = e.message || 'Request failed — check your API key in Settings.';
-        const msgHtml = `<div style="padding:12px;background:rgba(248,113,113,0.1);border:1px solid rgba(180,80,80,0.3);border-radius:10px;font-size:13px;color:var(--red);margin-bottom:10px;">✗ ${errMsg}</div>`;
-        if (rd) { rd.innerHTML = msgHtml; }
+        // Append error below any existing debug output (don't replace it)
+        const errHtml = `<div style="padding:12px;background:rgba(248,113,113,0.1);border:1px solid rgba(180,80,80,0.3);border-radius:10px;font-size:13px;color:var(--red);">✗ ${errMsg}</div>`;
+        if (rd) rd.innerHTML = errHtml + rd.innerHTML;
         else {
           const t = document.createElement('div');
           t.style.cssText = 'position:fixed;bottom:100px;left:20px;right:20px;z-index:999;';
-          t.innerHTML = msgHtml;
+          t.innerHTML = errHtml;
           document.body.appendChild(t);
-          setTimeout(() => t.remove(), 6000);
+          setTimeout(() => t.remove(), 10000);
         }
       }
     };
@@ -5440,13 +5513,30 @@ Extract prescribed weights exactly as written on the board. Use null if no weigh
             'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
           body: JSON.stringify({
             model: 'claude-sonnet-4-6',
-            max_tokens: 800,
-            system: `Parse a workout description into structured data and estimate kCal burned.
+            max_tokens: 1200,
+            system: `Parse a workout description into structured exercises and estimate kCal.
 Athlete: age ${p.age||40}, weight ${p.weight||80}kg.
-Return ONLY valid JSON, no markdown:
-{"name":"short workout name","exercises":[{"name":"exercise name","sets":"e.g. 5×10 or 21-15-9","reps":"rep scheme","prescribedWeight":"weight as written e.g. 40kg or bodyweight or null","unit":"kg or m or cal or s or null","kcal":number}],"kcalEstimated":number}
-Extract prescribed weights exactly as written. Use null for bodyweight movements. 
-For kcal: use MET × weight × duration. Strength: estimate from sets×reps×prescribedWeight. Cardio: distance+time. Boxing: duration+intensity.`,
+
+Return ONLY valid JSON, no markdown, no explanation:
+{
+  "name": "short workout name",
+  "exercises": [
+    {
+      "name": "exercise name",
+      "scheme": "exact rep/set scheme as written (e.g. 21-15-9, 5 rounds of 10, 400m, 60s)",
+      "prescribedWeight": "exact weight or bodyweight or null",
+      "unit": "kg or lb or m or cal or s or null",
+      "kcal": estimated_integer
+    }
+  ],
+  "kcalEstimated": total_integer
+}
+
+Rules:
+- Keep rep schemes EXACTLY as written — do not split 21-15-9 into sets and reps
+- Bodyweight movements: prescribedWeight = "bodyweight"
+- No load (run, row, jump): prescribedWeight = null
+- kcal: MET × weight × time for cardio; load × reps × factor for strength`,
             messages: [{role:'user', content: text}]
           })
         });
@@ -6546,194 +6636,309 @@ function updateAvatar(){
 }
 
 function openSettings(){
-  const p = getProfile();
+  const p  = getProfile();
   const ns = JSON.parse(localStorage.getItem('atlas_nutrition') || '{}');
-  const macros = ns.macros;
   const np = ns.profile || {};
-  const eq = p.equipment || [];
-  const injuries = p.injuries || [];
-  const focusSkills = p.focusSkills || [];
-  const goal = p.goal || np.goal || '';
 
   document.getElementById('settings-overlay')?.remove();
 
-  const initials = p.name
-    ? p.name.trim().split(/\s+/).filter(Boolean).reduce(function(a,w,i,arr){ return i===0||i===arr.length-1?a+w[0]:a; },'').toUpperCase().slice(0,2)
-    : '?';
-
-  const EQUIP  = ['Pull-up bar','Rings','Parallettes','Resistance bands','Kettlebells','Dumbbells','Barbell','Box','Jump rope','Foam roller'];
-  const INJR   = ['Right knee','Left knee','Right elbow','Left elbow','Right shoulder','Left shoulder','Lower back','Wrist'];
-  const SKILLS = ['Ring Muscle-Up','Handstand','Handstand Walk','Butterfly Pull-Up','Planche','Front Lever','Back Lever'];
-  const GOALS  = [{v:'loss',l:'Fat Loss',s:'Reduce body fat'},{v:'recomp',l:'Recomposition',s:'Lose fat, gain muscle'},{v:'perf',l:'Performance',s:'Fuel athletic output'},{v:'gain',l:'Muscle Gain',s:'Build size and strength'}];
-  const LANGS  = [{c:'en',l:'English'},{c:'fr',l:'Français'},{c:'es',l:'Español'},{c:'de',l:'Deutsch'}];
-
   const ovl = document.createElement('div');
   ovl.id = 'settings-overlay';
-  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(8px);';
+  ovl.style.cssText = 'position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);display:flex;align-items:flex-end;';
 
   const sheet = document.createElement('div');
-  sheet.style.cssText = 'background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;margin:0 auto;max-height:92vh;overflow-y:auto;padding-bottom:32px;';
+  sheet.style.cssText = 'background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;margin:0 auto;max-height:94vh;overflow-y:auto;padding-bottom:40px;';
   ovl.appendChild(sheet);
 
-  // --- helper: row label
-  function lbl(txt) {
+  // ── helpers ──────────────────────────────────────────────────
+  function sec(title) {
     const d = document.createElement('div');
-    d.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin:16px 20px 8px;';
-    d.textContent = txt;
-    return d;
+    d.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--subtle);margin:22px 20px 10px;';
+    d.textContent = title;
+    sheet.appendChild(d);
   }
-  // --- helper: text/number input
-  function mkInput(id, placeholder, value, type) {
-    const inp = document.createElement('input');
-    inp.id        = id;
-    inp.type      = type || 'text';
-    inp.value     = value || '';
-    inp.placeholder = placeholder || '';
-    inp.style.cssText = 'display:block;width:calc(100% - 40px);margin:0 20px 10px;padding:13px 14px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:15px;outline:none;box-sizing:border-box;';
-    return inp;
+  function row(child) {
+    const d = document.createElement('div');
+    d.style.cssText = 'margin:0 20px 8px;';
+    d.appendChild(child);
+    sheet.appendChild(d);
+  }
+  function inp(id, label, val, type, placeholder) {
+    const wrap = document.createElement('div');
+    const lbl  = document.createElement('div');
+    lbl.style.cssText = 'font-size:11px;color:var(--subtle);font-weight:600;margin-bottom:4px;letter-spacing:0.05em;text-transform:uppercase;';
+    lbl.textContent = label;
+    const el = document.createElement('input');
+    el.id = id; el.type = type||'text'; el.value = val||'';
+    el.placeholder = placeholder||'';
+    el.style.cssText = 'width:100%;padding:12px 14px;background:var(--card);border:1.5px solid var(--border2);border-radius:11px;color:var(--ink);font-size:15px;outline:none;box-sizing:border-box;font-family:Outfit,sans-serif;';
+    el.onfocus = function(){ el.style.borderColor = 'var(--accent)'; };
+    el.onblur  = function(){ el.style.borderColor = 'var(--border2)'; };
+    wrap.appendChild(lbl); wrap.appendChild(el);
+    return wrap;
+  }
+  function grid(...items) {
+    const g = document.createElement('div');
+    g.style.cssText = 'display:grid;grid-template-columns:repeat('+items.length+',1fr);gap:8px;margin:0 20px 8px;';
+    items.forEach(function(item){ g.appendChild(item); });
+    sheet.appendChild(g);
+  }
+  function chipRow(id, options, current, multi) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;margin:0 20px 8px;';
+    wrap.id = id + '-chips';
+    let selected = multi ? (current||[]).slice() : [current||''];
+    function render() {
+      wrap.innerHTML = '';
+      options.forEach(function(opt) {
+        const v = opt.v || opt; const l = opt.l || opt;
+        const on = multi ? selected.includes(v) : selected[0] === v;
+        const btn = document.createElement('button');
+        btn.style.cssText = 'padding:8px 14px;border-radius:99px;border:1.5px solid '+(on?'var(--accent)':'var(--border2)')+
+          ';background:'+(on?'var(--accent-light)':'var(--card2)')+
+          ';color:'+(on?'var(--accent)':'var(--mid)')+
+          ';font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;';
+        btn.textContent = l;
+        btn.onclick = function() {
+          if (multi) {
+            selected = on ? selected.filter(function(x){return x!==v;}) : [...selected, v];
+          } else { selected = [v]; }
+          wrap._value = multi ? selected : selected[0];
+          render();
+        };
+        wrap.appendChild(btn);
+      });
+    }
+    wrap._value = multi ? selected : selected[0];
+    render();
+    sheet.appendChild(wrap);
+    return wrap;
+  }
+  function linkBtn(label, sub, onclick) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'display:flex;align-items:center;justify-content:space-between;width:calc(100%-40px);margin:0 20px 8px;padding:13px 16px;background:var(--card);border:1px solid var(--border);border-radius:13px;cursor:pointer;font-family:Outfit,sans-serif;box-sizing:border-box;';
+    btn.innerHTML = '<div><div style="font-size:14px;font-weight:600;color:var(--ink);">'+label+'</div>'+(sub?'<div style="font-size:12px;color:var(--subtle);margin-top:2px;">'+sub+'</div>':'')+'</div><span style="font-size:16px;color:var(--subtle);">›</span>';
+    btn.onclick = onclick;
+    sheet.appendChild(btn);
   }
 
-  // handle bar
-  const bar = document.createElement('div');
-  bar.style.cssText = 'width:36px;height:3px;background:var(--border2);border-radius:2px;margin:16px auto 0;';
-  sheet.appendChild(bar);
+  // ── header ───────────────────────────────────────────────────
+  const initials = p.name
+    ? p.name.trim().split(/\s+/).filter(Boolean).reduce(function(a,w,i,arr){return i===0||i===arr.length-1?a+w[0]:a;},'').toUpperCase().slice(0,2)
+    : '?';
 
-  // header row
   const hdr = document.createElement('div');
-  hdr.style.cssText = 'display:flex;align-items:center;gap:16px;padding:16px 20px;';
-  hdr.innerHTML =
-    '<div style="width:60px;height:60px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#0a0a08;flex-shrink:0;">' + initials + '</div>' +
-    '<div style="flex:1;"><div style="font-size:22px;font-weight:700;color:var(--ink);text-transform:uppercase;">' + (p.name || 'Your Profile') + '</div>' +
-    '<div style="font-size:13px;color:var(--mid);margin-top:2px;">' + ({loss:'Fat Loss',recomp:'Recomposition',perf:'Performance',gain:'Muscle Gain'}[goal] || 'Tap Save to set your goal') + '</div></div>';
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.style.cssText = 'width:34px;height:34px;border-radius:10px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:16px;flex-shrink:0;';
-  closeBtn.onclick = function(){ ovl.remove(); };
-  hdr.appendChild(closeBtn);
+  hdr.style.cssText = 'padding:20px 20px 0;';
+  hdr.innerHTML = '<div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 20px;"></div>'
+    + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">'
+    + '<div style="width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-size:22px;font-weight:800;color:#0a0a08;flex-shrink:0;">' + initials + '</div>'
+    + '<div style="flex:1;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:28px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:0.04em;">' + (p.name || 'Your Profile') + '</div>'
+    + '<div style="font-size:12px;color:var(--subtle);margin-top:2px;">Calibration · All settings</div></div>'
+    + '<button onclick="document.getElementById(\'settings-overlay\').remove()" style="width:34px;height:34px;border-radius:10px;background:var(--card2);border:1px solid var(--border);cursor:pointer;color:var(--mid);font-size:16px;flex-shrink:0;">✕</button>'
+    + '</div>';
   sheet.appendChild(hdr);
 
-  // Personal section
-  sheet.appendChild(lbl('Personal'));
-  const nameInp = mkInput('s-name', 'Your name', p.name);
-  sheet.appendChild(nameInp);
+  // ── IDENTITY ─────────────────────────────────────────────────
+  sec('Identity');
+  row(inp('s-name','Name',p.name,'text','Your name'));
 
-  const numGrid = document.createElement('div');
-  numGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 20px 8px;';
-  [{id:'s-age',lbl:'Age',val:np.age||p.age||''},{id:'s-weight',lbl:'Weight (kg)',val:np.weight||p.weight||''},{id:'s-height',lbl:'Height (cm)',val:np.height||p.height||''}].forEach(function(cfg){
-    const wrap = document.createElement('div');
-    const l = document.createElement('div');
-    l.style.cssText = 'font-size:11px;color:var(--mid);margin-bottom:4px;';
-    l.textContent = cfg.lbl;
-    const inp = document.createElement('input');
-    inp.id    = cfg.id;
-    inp.type  = 'number';
-    inp.value = cfg.val;
-    inp.style.cssText = 'width:100%;padding:11px 10px;background:var(--card);border:1.5px solid var(--border2);border-radius:10px;color:var(--ink);font-size:15px;outline:none;box-sizing:border-box;';
-    wrap.appendChild(l);
-    wrap.appendChild(inp);
-    numGrid.appendChild(wrap);
-  });
-  sheet.appendChild(numGrid);
+  grid(
+    inp('s-age',  'Age',     np.age||p.age||'',     'number','e.g. 45'),
+    inp('s-weight','Weight', np.weight||p.weight||'','number','kg'),
+    inp('s-height','Height', np.height||p.height||'','number','cm')
+  );
 
-  // Training goal
-  sheet.appendChild(lbl('Training Goal'));
-  const goalsDiv = document.createElement('div');
-  goalsDiv.style.cssText = 'display:flex;flex-direction:column;gap:7px;padding:0 20px;';
-  GOALS.forEach(function(g){
-    const active = goal === g.v;
-    const btn = document.createElement('button');
-    btn.id = 'goal-btn-' + g.v;
-    btn.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;background:' + (active?'var(--accent-light)':'var(--card)') + ';border:1.5px solid ' + (active?'var(--accent)':'var(--border)') + ';border-radius:12px;cursor:pointer;text-align:left;width:100%;';
-    btn.onclick = function(){ selectGoal(g.v); };
-    const dot = document.createElement('div');
-    dot.style.cssText = 'width:26px;height:26px;border-radius:8px;background:' + (active?'var(--accent)':'var(--card2)') + ';border:1px solid ' + (active?'var(--accent)':'var(--border2)') + ';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:' + (active?'#0a0a08':'var(--subtle)') + ';flex-shrink:0;';
-    dot.textContent = active ? '✓' : {loss:'1',recomp:'2',perf:'3',gain:'4'}[g.v];
-    const txt = document.createElement('div');
-    txt.innerHTML = '<div style="font-size:14px;font-weight:600;color:var(--ink);">' + g.l + '</div><div style="font-size:12px;color:var(--mid);">' + g.s + '</div>';
-    btn.appendChild(dot); btn.appendChild(txt);
-    goalsDiv.appendChild(btn);
-  });
-  sheet.appendChild(goalsDiv);
+  const SEX = [{v:'male',l:'Male'},{v:'female',l:'Female'}];
+  sec('Biological sex');
+  chipRow('s-sex', SEX, np.sex||p.sex||'male', false);
 
-  // chip helper
-  function mkChips(title, key, items, activeArr, chipClass) {
-    sheet.appendChild(lbl(title));
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;padding:0 20px;';
-    items.forEach(function(item){
+  // ── TRAINING ─────────────────────────────────────────────────
+  sec('Training Goal');
+  const GOALS = [
+    {v:'loss',  l:'Fat Loss',      s:'Caloric deficit · body fat reduction'},
+    {v:'recomp',l:'Recomposition', s:'Lose fat while gaining muscle'},
+    {v:'perf',  l:'Performance',   s:'Fuel output · optimise for sport'},
+    {v:'gain',  l:'Muscle Gain',   s:'Caloric surplus · hypertrophy'},
+  ];
+  const goalChips = document.createElement('div');
+  goalChips.style.cssText = 'display:flex;flex-direction:column;gap:7px;margin:0 20px 8px;';
+  let selGoal = np.goal||p.goal||'perf';
+  function renderGoals() {
+    goalChips.innerHTML = '';
+    GOALS.forEach(function(g) {
+      const on = selGoal === g.v;
       const btn = document.createElement('button');
-      btn.className = chipClass + (activeArr.includes(item) ? ' on' : '');
-      btn.textContent = item;
-      btn.onclick = function(){ toggleChip(btn, key, item); };
-      wrap.appendChild(btn);
+      btn.style.cssText = 'display:flex;align-items:center;gap:12px;padding:11px 14px;background:'
+        +(on?'var(--accent-light)':'var(--card)')+';border:1.5px solid '+(on?'var(--accent)':'var(--border)')
+        +';border-radius:12px;cursor:pointer;text-align:left;width:100%;';
+      btn.innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:'
+        +(on?'var(--accent)':'var(--border2)')+';flex-shrink:0;"></div>'
+        +'<div><div style="font-size:14px;font-weight:600;color:'+(on?'var(--accent)':'var(--ink)')+';">'+g.l+'</div>'
+        +'<div style="font-size:12px;color:var(--subtle);margin-top:1px;">'+g.s+'</div></div>';
+      btn.onclick = function(){ selGoal = g.v; renderGoals(); };
+      goalChips.appendChild(btn);
     });
-    sheet.appendChild(wrap);
   }
-  mkChips('Focus Skills', 'focusSkills', SKILLS, focusSkills, 'equip-chip');
-  mkChips('Equipment',    'equipment',   EQUIP,  eq,          'equip-chip');
-  mkChips('Active Injuries', 'injuries', INJR,   injuries,    'injury-chip');
+  renderGoals();
+  sheet.appendChild(goalChips);
 
-  // Nutrition summary
-  sheet.appendChild(lbl('Nutrition'));
-  const nutBox = document.createElement('div');
-  nutBox.style.cssText = 'margin:0 20px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;';
+  sec('Activity Level');
+  const ACTIVITY = [
+    {v:'low',  l:'Light',    s:'1–2 days/week'},
+    {v:'mod',  l:'Moderate', s:'3–4 days/week'},
+    {v:'high', l:'Active',   s:'5–6 days/week'},
+    {v:'elite',l:'Elite',    s:'Daily + doubles'},
+  ];
+  chipRow('s-activity', ACTIVITY, np.activity||p.activity||'high', false);
+
+  // ── SCHEDULE ─────────────────────────────────────────────────
+  sec('Training Schedule');
+  const DAY_OPTS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const DAY_NUMS = [1,2,3,4,5,6,0];
+  const schedWrap = document.createElement('div');
+  schedWrap.style.cssText = 'display:flex;gap:6px;margin:0 20px 8px;';
+  let selDays = (p.trainingDays||[1,2,4,5,6]).slice();
+  function renderSched() {
+    schedWrap.innerHTML = '';
+    DAY_OPTS.forEach(function(d,i) {
+      const num = DAY_NUMS[i];
+      const on  = selDays.includes(num);
+      const btn = document.createElement('button');
+      btn.style.cssText = 'flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid '
+        +(on?'var(--accent)':'var(--border2)')+';background:'+(on?'var(--accent-light)':'var(--card2)')
+        +';color:'+(on?'var(--accent)':'var(--subtle)')+';font-size:12px;font-weight:700;cursor:pointer;';
+      btn.textContent = d;
+      btn.onclick = function(){
+        selDays = on ? selDays.filter(function(x){return x!==num;}) : [...selDays,num];
+        renderSched();
+      };
+      schedWrap.appendChild(btn);
+    });
+  }
+  renderSched();
+  sheet.appendChild(schedWrap);
+  const schedHint = document.createElement('div');
+  schedHint.style.cssText = 'font-size:12px;color:var(--subtle);margin:0 20px 8px;';
+  schedHint.textContent = selDays.length + ' training days/week · override any day from Today tab';
+  sheet.appendChild(schedHint);
+
+  // ── BODY & HEALTH ─────────────────────────────────────────────
+  sec('Injuries & Limitations');
+  const INJR = ['Right knee','Left knee','Right elbow','Left elbow','Right shoulder','Left shoulder','Lower back','Wrist','Hip','Ankle'];
+  chipRow('s-injuries', INJR, p.injuries||[], true);
+
+  sec('Current Rehab');
+  const REHAB_PHASES = [
+    {v:'',       l:'None active'},
+    {v:'knee',   l:'Knee protocol'},
+    {v:'elbow',  l:'Elbow protocol'},
+    {v:'shoulder',l:'Shoulder protocol'},
+  ];
+  chipRow('s-rehab', REHAB_PHASES, [p.activeRehab||''], false);
+
+  // ── EQUIPMENT ─────────────────────────────────────────────────
+  sec('Available Equipment');
+  const EQUIP = [
+    'Pull-up bar','Rings','Parallettes','Resistance bands',
+    'Kettlebells','Dumbbells','Barbell','Box','Jump rope',
+    'Foam roller','Assault bike','Rowing machine','Ski erg',
+  ];
+  chipRow('s-equipment', EQUIP, p.equipment||[], true);
+
+  // ── SKILLS ───────────────────────────────────────────────────
+  sec('Skill Focus Areas');
+  const SKILLS = [
+    'Ring Muscle-Up','Handstand','Handstand Walk',
+    'Butterfly Pull-Up','Planche','Front Lever','Back Lever',
+    'One-Arm Pull-Up','L-Sit',
+  ];
+  chipRow('s-skills', SKILLS, p.focusSkills||[], true);
+
+  // ── NUTRITION TARGETS ────────────────────────────────────────
+  sec('Nutrition Targets');
+  const macros = ns.macros;
+  const nutInfo = document.createElement('div');
+  nutInfo.style.cssText = 'margin:0 20px 8px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:13px;color:var(--mid);line-height:1.7;';
   if (macros) {
-    const ng = document.createElement('div');
-    ng.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;';
-    [{dt:'Training',c:'var(--accent)',d:macros.training},{dt:'Rest',c:'var(--blue)',d:macros.rest}].forEach(function(x){
-      const cell = document.createElement('div');
-      cell.innerHTML = '<div style="font-size:10px;color:var(--subtle);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">' + x.dt + '</div>' +
-        '<div style="font-size:26px;font-weight:700;color:' + x.c + ';">' + x.d.kcal + '<span style="font-size:11px;color:var(--subtle);"> kcal</span></div>' +
-        '<div style="font-size:12px;color:var(--mid);">P ' + x.d.protein + 'g · C ' + x.d.carbs + 'g · F ' + x.d.fat + 'g</div>';
-      ng.appendChild(cell);
-    });
-    nutBox.appendChild(ng);
+    nutInfo.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;">Calculated from your profile</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">'
+      + '<span>Training day:</span><span style="color:var(--accent);font-weight:600;">' + macros.training.kcal + ' kcal</span>'
+      + '<span>Rest day:</span><span style="color:var(--accent);font-weight:600;">' + macros.rest.kcal + ' kcal</span>'
+      + '<span>Protein:</span><span style="color:var(--ink);">' + macros.training.protein + 'g</span>'
+      + '</div>';
   } else {
-    const nd = document.createElement('div');
-    nd.style.cssText = 'font-size:13px;color:var(--subtle);margin-bottom:10px;';
-    nd.textContent = 'Not set up yet — complete Fuel tab first.';
-    nutBox.appendChild(nd);
+    nutInfo.innerHTML = 'Complete your age, weight, height, sex and goal above to auto-calculate targets. Or set manually in the <strong style="color:var(--ink);">Fuel tab</strong>.';
   }
-  const editNut = document.createElement('button');
-  editNut.style.cssText = 'width:100%;padding:11px;background:var(--card2);border:1.5px solid var(--border2);border-radius:10px;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;';
-  editNut.textContent = 'Edit nutrition profile →';
-  editNut.onclick = function(){ ovl.remove(); showTab('nutrition'); };
-  nutBox.appendChild(editNut);
-  sheet.appendChild(nutBox);
+  sheet.appendChild(nutInfo);
 
-  // Training schedule
-  sheet.appendChild(lbl('Training Schedule'));
-  const patBtn = document.createElement('button');
-  patBtn.style.cssText = 'display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:13px;cursor:pointer;font-family:Outfit,sans-serif;margin-bottom:16px;';
-  patBtn.innerHTML = '<span style="font-size:15px;font-weight:500;color:var(--ink);">Weekly training pattern</span><span style="font-size:13px;color:var(--subtle);">Edit →</span>';
-  patBtn.onclick = () => { ovl.remove(); openWeeklyPatternEditor(); };
-  sheet.appendChild(patBtn);
+  // ── UNITS & LANGUAGE ────────────────────────────────────────
+  sec('Units & Language');
+  const UNITS = [{v:'metric',l:'Metric (kg / cm)'},{v:'imperial',l:'Imperial (lb / in)'}];
+  chipRow('s-units', UNITS, p.units||'metric', false);
 
-  // Language
-  sheet.appendChild(lbl('Language'));
-  const langWrap = document.createElement('div');
-  langWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:0 20px;';
-  LANGS.forEach(function(lg){
-    const active = currentLang === lg.c;
-    const btn = document.createElement('button');
-    btn.id = 'lang-btn-' + lg.c;
-    btn.style.cssText = 'padding:10px 18px;border-radius:99px;border:1.5px solid ' + (active?'var(--accent)':'var(--border2)') + ';background:' + (active?'var(--accent-light)':'var(--card2)') + ';color:' + (active?'var(--accent)':'var(--mid)') + ';font-size:14px;font-weight:600;cursor:pointer;';
-    btn.textContent = lg.l;
-    btn.onclick = function(){ setLang(lg.c); updateLangBtns(); };
-    langWrap.appendChild(btn);
-  });
-  sheet.appendChild(langWrap);
+  const LANGS = [{v:'en',l:'English'},{v:'fr',l:'Français'},{v:'es',l:'Español'},{v:'de',l:'Deutsch'}];
+  chipRow('s-lang', LANGS, localStorage.getItem('atlas_lang')||'en', false);
 
-  // Save button
+  // ── SAVE ────────────────────────────────────────────────────
   const saveBtn = document.createElement('button');
-  saveBtn.style.cssText = 'display:block;width:calc(100% - 40px);margin:20px 20px 0;padding:17px;background:linear-gradient(135deg,var(--accent),#a8733a);color:#0a0a08;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;';
-  saveBtn.textContent = 'Save';
-  saveBtn.onclick = saveSettingsAndClose;
+  saveBtn.style.cssText = 'display:block;width:calc(100% - 40px);margin:24px 20px 0;padding:17px;background:linear-gradient(135deg,var(--accent),#a8733a);color:#0a0a08;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;';
+  saveBtn.textContent = 'Save Profile';
+  saveBtn.onclick = function() {
+    // Read all values
+    function gv(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+    function gc(id){ const el=document.getElementById(id+'-chips'); return el?el._value:null; }
+
+    const name   = gv('s-name');
+    const age    = parseInt(gv('s-age'))   || null;
+    const weight = parseFloat(gv('s-weight')) || null;
+    const height = parseFloat(gv('s-height')) || null;
+    const sex    = gc('s-sex')      || 'male';
+    const goal   = selGoal;
+    const activity = gc('s-activity') || 'high';
+    const injuries = gc('s-injuries') || [];
+    const equipment = gc('s-equipment') || [];
+    const focusSkills = gc('s-skills') || [];
+    const activeRehab = gc('s-rehab')  || '';
+    const units  = gc('s-units')    || 'metric';
+    const lang   = gc('s-lang')     || 'en';
+    const trainDays = selDays;
+
+    // Save profile
+    const prof = {
+      name, age, weight, height, sex, goal, activity,
+      injuries, equipment, focusSkills, activeRehab,
+      trainingDays: trainDays, units,
+    };
+    saveProfile(prof);
+
+    // Sync to nutrition profile + recalculate macros
+    const nsData = JSON.parse(localStorage.getItem('atlas_nutrition') || '{}');
+    nsData.profile = { age, weight, height, sex, activity, goal };
+    const newMacros = calcMacros(nsData.profile);
+    if (newMacros) nsData.macros = newMacros;
+    localStorage.setItem('atlas_nutrition', JSON.stringify(nsData));
+
+    // Save language
+    if (lang !== (localStorage.getItem('atlas_lang')||'en')) {
+      setLang(lang);
+    }
+
+    ovl.remove();
+    renderToday();
+
+    // Show confirmation toast
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:calc(var(--safe-top)+12px);left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--green)40;border-radius:99px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--green);z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+    t.textContent = '✓ Profile saved';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 2500);
+  };
   sheet.appendChild(saveBtn);
 
   document.body.appendChild(ovl);
   ovl.onclick = function(e){ if(e.target===ovl) ovl.remove(); };
 }
+
 
 let _pendingGoal=null;
 function selectGoal(val){
