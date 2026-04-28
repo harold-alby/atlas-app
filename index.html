@@ -2595,12 +2595,12 @@ function renderToday() {
             ${activity.healthSyncedAt ? '<span style="color:var(--subtle);font-weight:400;"> · ' + new Date(activity.healthSyncedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + '</span>' : ''}
           </div>
           <div style="display:flex;gap:6px;">
-            <a href="shortcuts://run-shortcut?name=ATLAS%20Health%20Sync"
+            <button onclick="openHealthSetup()"
               style="padding:6px 12px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.25);
               border-radius:99px;font-size:12px;font-weight:700;color:rgba(255,59,48,0.9);
-              text-decoration:none;display:flex;align-items:center;gap:5px;">
+              cursor:pointer;display:flex;align-items:center;gap:5px;">
               ❤️ Sync
-            </a>
+            </button>
             <button onclick="openHealthSetup()"
               style="padding:6px 12px;background:var(--card2);border:1px solid var(--border2);
               border-radius:99px;font-size:12px;font-weight:600;color:var(--subtle);cursor:pointer;">
@@ -4342,15 +4342,29 @@ function openHealthSetup() {
     <div style="margin-bottom:20px;">
       <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
         color:var(--subtle);margin-bottom:10px;">After setup — one tap sync</div>
-      <a href="shortcuts://run-shortcut?name=ATLAS%20Health%20Sync"
-        style="display:flex;align-items:center;justify-content:center;gap:10px;
-        padding:16px;background:rgba(255,59,48,0.1);border:1.5px solid rgba(255,59,48,0.3);
-        border-radius:14px;text-decoration:none;">
-        <span style="font-size:20px;">❤️</span>
-        <span style="font-size:15px;font-weight:700;color:rgba(255,59,48,0.9);">Run ATLAS Health Sync now</span>
-      </a>
-      <div style="font-size:11px;color:var(--subtle);text-align:center;margin-top:6px;">
-        Opens Shortcuts app and runs your shortcut · also available from Today dashboard
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;">
+        <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;">
+          Name your shortcut exactly:
+        </div>
+        <div style="font-family:monospace;font-size:15px;font-weight:700;color:var(--accent);
+          background:var(--card2);padding:10px 14px;border-radius:9px;margin-bottom:10px;
+          letter-spacing:0.02em;">ATLAS Health Sync</div>
+        <div style="font-size:12px;color:var(--mid);margin-bottom:12px;line-height:1.6;">
+          Once created with that exact name, this button will open and run it directly.
+          Any typo in the name causes the "file does not exist" error.
+        </div>
+        <a href="shortcuts://run-shortcut?name=ATLAS%20Health%20Sync"
+          style="display:flex;align-items:center;justify-content:center;gap:10px;
+          padding:14px;background:rgba(255,59,48,0.1);border:1.5px solid rgba(255,59,48,0.3);
+          border-radius:11px;text-decoration:none;">
+          <span style="font-size:18px;">❤️</span>
+          <span style="font-size:14px;font-weight:700;color:rgba(255,59,48,0.9);">
+            Run ATLAS Health Sync
+          </span>
+        </a>
+        <div style="font-size:11px;color:var(--subtle);text-align:center;margin-top:8px;">
+          Only works after you have created and named the shortcut above
+        </div>
       </div>
     </div>
 
@@ -5422,11 +5436,11 @@ function openLogEntry(existingId) {
             <span style="font-size:13px;color:var(--mid);font-weight:600;white-space:nowrap;">kcal</span>
           </div>
           <!-- Shortcuts deep link -->
-          <a href="shortcuts://run-shortcut?name=ATLAS%20Log%20kCal"
+          <a href="shortcuts://open"
             style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card2);border:1px solid var(--border2);
             border-radius:9px;color:var(--mid);font-size:12px;text-decoration:none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            Open ATLAS Shortcut on Apple Watch
+            Open Shortcuts app
             <span style="margin-left:auto;font-size:10px;opacity:0.5;">→</span>
           </a>
         </div>
