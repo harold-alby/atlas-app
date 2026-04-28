@@ -2586,38 +2586,65 @@ function renderToday() {
       </div>
 
       <!-- Steps + burned input row -->
-      <div style="display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);align-items:center;">
-        <button onclick="openHealthSetup()"
-          style="flex-shrink:0;width:36px;height:36px;border-radius:10px;
-          background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.25);
-          cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">
-          ❤️
-        </button>
-        <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--card2);
-          border-radius:10px;padding:10px 12px;">
-          <span style="font-size:18px;">👟</span>
-          <div style="flex:1;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-              color:var(--subtle);">Steps</div>
-            <input id="today-steps" type="number" placeholder="0"
-              value="${activity.steps||''}"
-              onchange="saveTodayMetric('steps',this.value)"
-              style="background:none;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;
-              font-size:20px;font-weight:700;color:var(--ink);width:100%;padding:0;">
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <!-- Health sync button -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+            color:var(--subtle);">
+            ${activity.source==='health' ? '<span style="color:var(--green);">● From Apple Health</span>' : 'Activity'}
+            ${activity.healthSyncedAt ? '<span style="color:var(--subtle);font-weight:400;"> · ' + new Date(activity.healthSyncedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + '</span>' : ''}
+          </div>
+          <div style="display:flex;gap:6px;">
+            <a href="shortcuts://run-shortcut?name=ATLAS%20Health%20Sync"
+              style="padding:6px 12px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.25);
+              border-radius:99px;font-size:12px;font-weight:700;color:rgba(255,59,48,0.9);
+              text-decoration:none;display:flex;align-items:center;gap:5px;">
+              ❤️ Sync
+            </a>
+            <button onclick="openHealthSetup()"
+              style="padding:6px 12px;background:var(--card2);border:1px solid var(--border2);
+              border-radius:99px;font-size:12px;font-weight:600;color:var(--subtle);cursor:pointer;">
+              Setup
+            </button>
           </div>
         </div>
-        <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--card2);
-          border-radius:10px;padding:10px 12px;">
-          <span style="font-size:18px;">🔥</span>
-          <div style="flex:1;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-              color:var(--subtle);">Burned</div>
-            <input id="today-burned" type="number" placeholder="0"
-              value="${kcalBurned||''}"
-              onchange="saveTodayMetric('kcalBurned',this.value)"
-              style="background:none;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;
-              font-size:20px;font-weight:700;color:${dtColor};width:100%;padding:0;">
+        <!-- Metrics row -->
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--card2);
+            border-radius:10px;padding:10px 12px;">
+            <div style="flex:1;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+                color:var(--subtle);margin-bottom:1px;">Steps</div>
+              <input id="today-steps" type="number" placeholder="—"
+                value="${activity.steps||''}"
+                onchange="saveTodayMetric('steps',this.value)"
+                style="background:none;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;
+                font-size:22px;font-weight:700;color:var(--ink);width:100%;padding:0;">
+            </div>
           </div>
+          <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--card2);
+            border-radius:10px;padding:10px 12px;">
+            <div style="flex:1;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+                color:var(--subtle);margin-bottom:1px;">Burned</div>
+              <input id="today-burned" type="number" placeholder="—"
+                value="${kcalBurned||''}"
+                onchange="saveTodayMetric('kcalBurned',this.value)"
+                style="background:none;border:none;outline:none;font-family:'Barlow Condensed',sans-serif;
+                font-size:22px;font-weight:700;color:${dtColor};width:100%;padding:0;">
+            </div>
+          </div>
+          ${activity.cyclingKm ? `
+          <div style="flex:1;display:flex;align-items:center;gap:8px;background:var(--card2);
+            border-radius:10px;padding:10px 12px;">
+            <div style="flex:1;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+                color:var(--subtle);margin-bottom:1px;">Cycling</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;
+                color:var(--accent);">${activity.cyclingKm.toFixed(1)}</div>
+              <div style="font-size:10px;color:var(--subtle);">km</div>
+            </div>
+          </div>` : ''}
         </div>
       </div>
     </div>
@@ -4073,122 +4100,268 @@ function showGPSSummary(entry, activity) {
 // ═══════════════════════════════════════════════════════════════
 
 function handleHealthURLParams() {
-  // Called on page load — checks for ?steps=X&kcal=Y&distance=Z params
-  // These are written by the ATLAS Apple Shortcut
+  // Called on page load — reads params written by the ATLAS Apple Shortcut
+  // Supports: ?steps=X&kcal=Y&resting=Z&cycling=D&date=YYYY-MM-DD
+  //           &workouts=[{"name":"Cycling","kcal":480,"distance":22.4,"duration":68,"type":"cycling"}]
   try {
     const params = new URLSearchParams(window.location.search);
     const steps    = params.get('steps');
-    const kcal     = params.get('kcal');
-    const distance = params.get('distance');
+    const kcal     = params.get('kcal');       // active energy burned
+    const resting  = params.get('resting');    // resting energy
+    const cycling  = params.get('cycling');    // cycling distance km
     const date     = params.get('date') || todayKey();
+    const wStr     = params.get('workouts');   // JSON array of workouts
 
-    if (!steps && !kcal && !distance) return;
+    if (!steps && !kcal && !resting && !cycling && !wStr) return;
 
-    const key = 'atlas_activity_' + date;
-    const existing = JSON.parse(localStorage.getItem(key) || '{}');
-    if (steps)    existing.steps        = parseInt(steps);
-    if (kcal)     existing.kcalBurned   = parseInt(kcal);
-    if (distance) existing.distanceKm   = parseFloat(distance);
-    localStorage.setItem(key, JSON.stringify(existing));
+    // ── Save activity metrics ──────────────────────────────────
+    const actKey  = 'atlas_activity_' + date;
+    const activity = JSON.parse(localStorage.getItem(actKey) || '{}');
+    if (steps)   activity.steps       = parseInt(steps);
+    if (kcal)    activity.kcalBurned  = parseInt(kcal);
+    if (resting) activity.kcalResting = parseInt(resting);
+    if (cycling) activity.cyclingKm   = parseFloat(cycling);
+    activity.healthSyncedAt = Date.now();
+    activity.source = 'health';
+    localStorage.setItem(actKey, JSON.stringify(activity));
 
-    // Clean the URL without reloading
-    const clean = window.location.pathname;
-    window.history.replaceState({}, '', clean);
+    // ── Import workouts from third-party apps ──────────────────
+    const imported = [];
+    if (wStr) {
+      let workouts = [];
+      try { workouts = JSON.parse(decodeURIComponent(wStr)); } catch(e) {}
 
-    // Show brief confirmation
+      const existingLog = getSessionLog();
+      // Avoid duplicates — check by date + name + duration
+      workouts.forEach(function(w) {
+        if (!w.name) return;
+        const isDupe = existingLog.some(function(e) {
+          return e.healthSource && e.name === w.name &&
+            Math.abs((e.ts||0) - Date.now()) < 86400000 * 2;
+        });
+        if (isDupe) return;
+
+        // Map workout type
+        const nameLow = (w.name||'').toLowerCase();
+        let type = 'cardio';
+        if (nameLow.includes('cycling') || nameLow.includes('bike') || nameLow.includes('ride')) type = 'cardio';
+        else if (nameLow.includes('run') || nameLow.includes('walk')) type = 'cardio';
+        else if (nameLow.includes('strength') || nameLow.includes('weight')) type = 'strength';
+        else if (nameLow.includes('yoga') || nameLow.includes('stretch')) type = 'mobility';
+        else if (nameLow.includes('crossfit') || nameLow.includes('wod')) type = 'wod';
+
+        const entry = {
+          id: Date.now() + Math.random(),
+          ts: Date.now(),
+          type,
+          name: w.name,
+          date: new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),
+          duration: w.duration ? Math.round(w.duration) : null,
+          scoreType: w.distance ? 'dist' : null,
+          score: w.distance ? parseFloat(w.distance).toFixed(1) + ' km' : null,
+          kcalActual: w.kcal ? Math.round(w.kcal) : null,
+          kcalEstimated: w.kcal ? Math.round(w.kcal) : null,
+          note: '',
+          tags: [],
+          exercises: [],
+          healthSource: true,
+          healthApp: w.app || 'Apple Health',
+        };
+        existingLog.unshift(entry);
+        imported.push(w.name);
+      });
+      if (imported.length) saveSessionLog(existingLog);
+    }
+
+    // ── Clean the URL ──────────────────────────────────────────
+    window.history.replaceState({}, '', window.location.pathname);
+
+    // ── Toast notification ─────────────────────────────────────
+    const parts = [];
+    if (steps)          parts.push(parseInt(steps).toLocaleString() + ' steps');
+    if (kcal)           parts.push(parseInt(kcal).toLocaleString() + ' kcal burned');
+    if (imported.length) parts.push(imported.join(', ') + ' imported');
+
     const toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;top:calc(var(--safe-top)+12px);left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--green)40;border-radius:99px;padding:10px 18px;font-size:13px;font-weight:600;color:var(--green);z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
-    toast.textContent = '✓ Health data synced' + (steps ? ' · ' + parseInt(steps).toLocaleString() + ' steps' : '');
+    toast.style.cssText = 'position:fixed;top:calc(var(--safe-top)+12px);left:50%;transform:translateX(-50%);' +
+      'background:var(--card);border:1px solid rgba(90,171,142,0.4);border-radius:14px;' +
+      'padding:12px 18px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.5);max-width:85vw;';
+    toast.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--green);' +
+      'letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">✓ Health Synced</div>' +
+      '<div style="font-size:13px;color:var(--ink2);">' + (parts.join(' · ') || 'Data updated') + '</div>';
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    setTimeout(function(){ toast.remove(); }, 4000);
+
+    // Re-render Today if it's active
+    if (document.getElementById('screen-today') &&
+        document.getElementById('screen-today').classList.contains('active')) {
+      renderToday();
+    }
   } catch(e) {
     console.warn('Health URL parse failed:', e);
   }
 }
 
 function openHealthSetup() {
-  const appURL = 'https://atlas-shrugged.netlify.app/';
+  const appURL = 'https://atlas-shrugged.netlify.app';
 
   const ovl = document.createElement('div');
-  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:flex;align-items:flex-end;backdrop-filter:blur(8px);';
+  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;' +
+    'display:flex;align-items:flex-end;';
 
-  ovl.innerHTML = `
-    <div style="background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;
-      margin:0 auto;max-height:90vh;overflow-y:auto;padding:24px 20px calc(var(--safe-bottom)+24px);">
-      <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 20px;"></div>
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:var(--bg2);border-radius:24px 24px 0 0;width:100%;' +
+    'max-width:520px;margin:0 auto;max-height:92vh;overflow-y:auto;' +
+    'padding:24px 20px calc(var(--safe-bottom)+28px);';
 
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-        <span style="font-size:32px;">❤️</span>
-        <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;
-            color:var(--ink);text-transform:uppercase;letter-spacing:0.04em;">Apple Health</div>
-          <div style="font-size:13px;color:var(--mid);">One-time setup · 3 minutes</div>
-        </div>
+  const syncURL = appURL + '/?steps=STEPS&kcal=ACTIVE_KCAL&resting=RESTING_KCAL' +
+    '&cycling=CYCLING_KM&date=DATE&workouts=WORKOUTS_JSON';
+
+  sheet.innerHTML = `
+    <div style="width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 20px;"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="width:44px;height:44px;border-radius:14px;background:rgba(255,59,48,0.15);
+        display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">❤️</div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;
+          color:var(--ink);text-transform:uppercase;letter-spacing:0.04em;">Apple Health Sync</div>
+        <div style="font-size:13px;color:var(--mid);">One-time setup · ~5 minutes</div>
       </div>
+    </div>
 
-      <div style="font-size:14px;color:var(--mid);line-height:1.65;margin-bottom:20px;">
-        Apple Health data can't be accessed directly from a web app. The workaround is a free
-        <strong style="color:var(--ink);">Apple Shortcut</strong> that reads your Health data
-        and sends it to ATLAS automatically.
-      </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;
+      padding:14px;margin-bottom:20px;font-size:13px;color:var(--mid);line-height:1.65;">
+      HealthKit can't be accessed directly from a web app. The workaround is a free
+      <strong style="color:var(--ink);">Apple Shortcut</strong> that reads your Health data
+      — including workouts from Mapmyride, Strava, and any other app — and sends it to ATLAS.
+      Once set up it runs automatically every morning.
+    </div>
 
-      <!-- Steps -->
+    <!-- What gets synced -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+      color:var(--subtle);margin-bottom:10px;">What gets synced</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
       ${[
-        ['1', 'Open the Shortcuts app', 'Already on your iPhone. Search for it if needed.'],
-        ['2', 'Create a new Shortcut', 'Tap the + button in the top right.'],
-        ['3', 'Add action: Get Health Sample', 'Search "Health" → select "Find Health Samples". Set Type to "Steps", Sort by "Start Date" descending, Limit to 1.'],
-        ['4', 'Add action: Get active energy', 'Add another "Find Health Samples". Set Type to "Active Energy Burned", same settings.'],
-        ['5', 'Add action: Open URL', `Add "Open URLs" action. Set the URL to:\n${appURL}?steps=[Steps Value]&kcal=[Energy Value]&date=[Current Date]\n\nUse the variable picker to insert the values from steps 3 and 4.`],
-        ['6', 'Set automation', 'Go to Automation tab → Create Personal Automation → Time of Day → set to 9:00 AM daily → add your shortcut → turn off "Ask Before Running".'],
-      ].map(([n,title,body])=>`
-        <div style="display:flex;gap:12px;margin-bottom:16px;">
-          <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-light);
-            border:1px solid var(--accent)30;display:flex;align-items:center;justify-content:center;
-            font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0;margin-top:1px;">${n}</div>
+        ['👟','Steps','From your iPhone or Watch'],
+        ['🔥','Active calories','Total energy burned'],
+        ['🚴','Cycling distance','From Mapmyride, Strava, etc.'],
+        ['🏋️','Workouts','All Health-connected apps'],
+        ['😴','Resting energy','Background calorie burn'],
+        ['📅','Date','Synced to correct day'],
+      ].map(([ic,l,s]) => `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;
+          padding:10px 12px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">${ic}</span>
           <div>
-            <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:3px;">${title}</div>
-            <div style="font-size:13px;color:var(--mid);line-height:1.6;white-space:pre-line;">${body}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink);">${l}</div>
+            <div style="font-size:11px;color:var(--subtle);">${s}</div>
           </div>
         </div>`).join('')}
+    </div>
 
-      <!-- URL template copy -->
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;
-        padding:14px;margin-bottom:20px;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
-          color:var(--subtle);margin-bottom:8px;">URL Template</div>
-        <div style="font-size:12px;color:var(--ink2);font-family:monospace;line-height:1.7;
-          word-break:break-all;">${appURL}?steps=STEPS&kcal=KCAL&date=DATE</div>
-        <button onclick="navigator.clipboard?.writeText('${appURL}?steps=STEPS&kcal=KCAL&date=DATE').then(()=>{this.textContent='Copied ✓';setTimeout(()=>this.textContent='Copy URL template',2000);})"
-          style="margin-top:10px;padding:8px 16px;background:var(--accent-light);border:1px solid var(--accent)30;
-          border-radius:8px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;">
-          Copy URL template
-        </button>
-      </div>
+    <!-- Setup steps -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+      color:var(--subtle);margin-bottom:12px;">Setup steps</div>
 
-      <!-- Test button -->
-      <div style="background:var(--card2);border:1px solid var(--border);border-radius:13px;
-        padding:14px;margin-bottom:20px;">
-        <div style="font-size:13px;color:var(--mid);margin-bottom:10px;line-height:1.5;">
-          <strong style="color:var(--ink2);">Test it manually</strong> — paste this in Safari to simulate the Shortcut with sample data:
+    ${[
+      ['1','Open Shortcuts app','Find it on your iPhone. Search "Shortcuts" if needed.'],
+      ['2','Tap + to create new shortcut','Then tap "Add Action".'],
+      ['3','Find Health samples — Steps',
+        'Search "Find Health Samples". Set: <strong style="color:var(--ink);">Type = Steps</strong>, Sort by Start Date descending, Limit 1.'],
+      ['4','Add: Active Energy',
+        'Add another "Find Health Samples". Type = <strong style="color:var(--ink);">Active Energy Burned</strong>, same settings.'],
+      ['5','Add: Workouts',
+        'Add "Find Workouts". Sort by Start Date descending, Limit 5. This picks up Mapmyride, Strava, and all other connected apps.'],
+      ['6','Add: Format workouts as JSON',
+        'Add a "Text" action. Build a JSON array from the workout variables: name, duration, total energy, distance, and workout activity type. Repeat with item from the Workouts list.'],
+      ['7','Add: Open URL action',
+        'Add "Open URLs". Paste the URL template below, replacing each PLACEHOLDER with the matching variable from the steps above.'],
+      ['8','Set up daily automation',
+        'Go to <strong style="color:var(--ink);">Automation tab → +</strong> → Time of Day → 8:00 AM → Daily → add your shortcut. On iOS 17+, turn off "Ask Before Running" for fully silent sync.'],
+    ].map(([n,title,body]) => `
+      <div style="display:flex;gap:12px;margin-bottom:14px;">
+        <div style="width:26px;height:26px;border-radius:7px;background:var(--accent-light);
+          border:1px solid var(--accent)30;display:flex;align-items:center;justify-content:center;
+          font-size:12px;font-weight:800;color:var(--accent);flex-shrink:0;margin-top:1px;">${n}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px;">${title}</div>
+          <div style="font-size:13px;color:var(--mid);line-height:1.6;">${body}</div>
         </div>
-        <div style="font-size:11px;color:var(--ink2);font-family:monospace;word-break:break-all;
-          line-height:1.6;">${appURL}?steps=8432&kcal=340</div>
-        <a href="${appURL}?steps=8432&kcal=340"
-          style="display:inline-block;margin-top:10px;padding:8px 16px;background:var(--card);
-          border:1px solid var(--border2);border-radius:8px;color:var(--mid);font-size:13px;
-          font-weight:600;text-decoration:none;">
-          Test with sample data →
-        </a>
-      </div>
+      </div>`).join('')}
 
-      <button onclick="this.closest('div[style*=inset]').remove()"
-        style="width:100%;padding:15px;background:var(--card2);border:1.5px solid var(--border2);
-        border-radius:13px;color:var(--mid);font-size:15px;font-weight:600;cursor:pointer;">
-        Done
+    <!-- URL template -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:13px;
+      padding:14px;margin-bottom:16px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+        color:var(--subtle);margin-bottom:8px;">URL template (copy into Shortcuts)</div>
+      <div style="font-size:11px;color:var(--ink2);font-family:monospace;line-height:1.8;
+        word-break:break-all;margin-bottom:10px;">${appURL}/?steps=STEPS&kcal=ACTIVE_KCAL&resting=RESTING_KCAL&cycling=CYCLING_KM&date=DATE&workouts=WORKOUTS_JSON</div>
+      <button id="copy-url-btn"
+        onclick="navigator.clipboard?.writeText('${appURL}/?steps=STEPS&kcal=ACTIVE_KCAL&resting=RESTING_KCAL&cycling=CYCLING_KM&date=DATE&workouts=WORKOUTS_JSON').then(()=>{document.getElementById('copy-url-btn').textContent='Copied ✓';setTimeout(()=>document.getElementById('copy-url-btn').textContent='Copy URL template',2000);})"
+        style="padding:8px 16px;background:var(--accent-light);border:1px solid var(--accent)30;
+        border-radius:8px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;">
+        Copy URL template
       </button>
-    </div>`;
+    </div>
 
-  ovl.onclick = e => { if(e.target===ovl) ovl.remove(); };
+    <!-- Placeholder reference -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:13px;
+      padding:14px;margin-bottom:16px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+        color:var(--subtle);margin-bottom:10px;">Variable reference</div>
+      ${[
+        ['STEPS','Value of Steps health sample'],
+        ['ACTIVE_KCAL','Sum of Active Energy samples'],
+        ['RESTING_KCAL','Sum of Resting Energy samples'],
+        ['CYCLING_KM','Distance of cycling workout in km'],
+        ['DATE','Format Date → ISO 8601 (YYYY-MM-DD)'],
+        ['WORKOUTS_JSON','URL-encoded JSON array from Repeat step'],
+      ].map(([k,v]) => `
+        <div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid var(--border);">
+          <code style="font-size:11px;color:var(--accent);font-family:monospace;min-width:110px;">${k}</code>
+          <span style="font-size:12px;color:var(--mid);">${v}</span>
+        </div>`).join('')}
+    </div>
+
+    <!-- Test link -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:13px;
+      padding:14px;margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;">Test it now</div>
+      <div style="font-size:12px;color:var(--mid);margin-bottom:10px;line-height:1.5;">
+        Tap below to simulate a sync with sample data and check the Today dashboard updates correctly.
+      </div>
+      <a href="${appURL}/?steps=9241&kcal=387&resting=1820&cycling=22.4&date=${new Date().toISOString().slice(0,10)}&workouts=%5B%7B%22name%22%3A%22Cycling%22%2C%22kcal%22%3A480%2C%22distance%22%3A22.4%2C%22duration%22%3A68%7D%5D"
+        style="display:inline-block;padding:10px 16px;background:var(--accent-light);
+        border:1px solid var(--accent)30;border-radius:10px;color:var(--accent);
+        font-size:13px;font-weight:600;text-decoration:none;">
+        Test with sample data →
+      </a>
+    </div>
+
+    <!-- One-tap sync -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+        color:var(--subtle);margin-bottom:10px;">After setup — one tap sync</div>
+      <a href="shortcuts://run-shortcut?name=ATLAS%20Health%20Sync"
+        style="display:flex;align-items:center;justify-content:center;gap:10px;
+        padding:16px;background:rgba(255,59,48,0.1);border:1.5px solid rgba(255,59,48,0.3);
+        border-radius:14px;text-decoration:none;">
+        <span style="font-size:20px;">❤️</span>
+        <span style="font-size:15px;font-weight:700;color:rgba(255,59,48,0.9);">Run ATLAS Health Sync now</span>
+      </a>
+      <div style="font-size:11px;color:var(--subtle);text-align:center;margin-top:6px;">
+        Opens Shortcuts app and runs your shortcut · also available from Today dashboard
+      </div>
+    </div>
+
+    <button onclick="this.closest('div[style*=inset]').remove()"
+      style="width:100%;padding:15px;background:var(--card2);border:1.5px solid var(--border2);
+      border-radius:13px;color:var(--mid);font-size:15px;font-weight:600;cursor:pointer;">
+      Done
+    </button>`;
+
+  ovl.appendChild(sheet);
+  ovl.onclick = function(e){ if(e.target===ovl) ovl.remove(); };
   document.body.appendChild(ovl);
 }
 
@@ -4810,6 +4983,88 @@ function saveSessionLog(log) {
   setTimeout(() => runInferenceCheck(false), 300);
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// LOG CARD SWIPE-TO-DELETE + TAP-TO-EDIT
+// ═══════════════════════════════════════════════════════════════
+
+function initLogSwipe() {
+  // Attach touch handlers to all swipe wrappers
+  document.querySelectorAll('.log-swipe-wrap').forEach(function(wrap) {
+    const inner = wrap.querySelector('.log-card-inner');
+    if (!inner || wrap._swipeInit) return;
+    wrap._swipeInit = true;
+
+    let startX = 0, startY = 0, currentX = 0;
+    let swiping = false, swipeOpen = false;
+    const THRESHOLD = 60; // px to fully open
+    const MAX = 80;       // max reveal width
+
+    inner.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      currentX = 0;
+      swiping = false;
+      inner.style.transition = 'none';
+    }, { passive: true });
+
+    inner.addEventListener('touchmove', function(e) {
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      // Only handle horizontal swipes
+      if (!swiping && Math.abs(dy) > Math.abs(dx)) return;
+      swiping = true;
+      // Only allow left swipe (negative dx)
+      currentX = Math.max(-MAX, Math.min(0, dx + (swipeOpen ? -MAX : 0)));
+      inner.style.transform = 'translateX(' + currentX + 'px)';
+    }, { passive: true });
+
+    inner.addEventListener('touchend', function() {
+      inner.style.transition = 'transform 0.2s ease';
+      if (currentX < -THRESHOLD) {
+        // Open — reveal delete button
+        inner.style.transform = 'translateX(-' + MAX + 'px)';
+        swipeOpen = true;
+        // Close any other open cards
+        document.querySelectorAll('.log-card-inner').forEach(function(other) {
+          if (other !== inner && other._swipeOpen) {
+            other.style.transform = 'translateX(0)';
+            other._swipeOpen = false;
+          }
+        });
+      } else {
+        // Snap back
+        inner.style.transform = 'translateX(0)';
+        swipeOpen = false;
+      }
+      inner._swipeOpen = swipeOpen;
+    });
+  });
+}
+
+function handleLogCardTap(e, id) {
+  // If the card is swiped open, tap closes it instead of opening edit
+  const inner = e.currentTarget;
+  if (inner && inner._swipeOpen) {
+    inner.style.transition = 'transform 0.2s ease';
+    inner.style.transform = 'translateX(0)';
+    inner._swipeOpen = false;
+    e.stopPropagation();
+    return;
+  }
+  // Otherwise open the edit sheet
+  openLogEntry(id);
+}
+
+function deleteLogEntry(id) {
+  const log = getSessionLog();
+  const entry = log.find(function(s) { return s.id == id; });
+  const name = entry ? (entry.name || 'this session') : 'this session';
+  if (!confirm('Delete "' + name + '"?')) return;
+  saveSessionLog(log.filter(function(s) { return s.id != id; }));
+  renderLog();
+}
+
 function renderLog() {
   const log = getSessionLog().concat(
     // migrate old STATE.sessionLog entries
@@ -4866,41 +5121,66 @@ function renderLog() {
     const cards = sessions.map(s => {
       const t = SESSION_TYPES.find(t => t.id === s.type) || SESSION_TYPES[SESSION_TYPES.length-1];
       const scoreStr = formatScore(s);
-      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;"
-        onclick="openLogDetail('${s.id}')">
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <div style="width:42px;height:42px;border-radius:12px;background:${t.color}18;border:1px solid ${t.color}30;
-            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:800;color:${t.color};letter-spacing:0.04em;text-align:center;line-height:1.2;">${t.label.toUpperCase()}</span>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:16px;font-weight:600;color:var(--ink);">${s.name || t.label}</div>
-            <div style="font-size:12px;color:var(--mid);margin-top:2px;">
-              ${s.duration ? s.duration + ' min' : ''}${s.duration && scoreStr ? ' · ' : ''}${scoreStr}
-              ${s.kcalActual ? ' · ' + s.kcalActual + ' kcal' : s.kcalEstimated ? ' · ~' + s.kcalEstimated + ' kcal est' : ''}
-              ${s.exercises && s.exercises.some(e=>e.actualWeight) ? ' · weights logged' : ''}
-            </div>
-            ${s.intensityScore ? `<div style="display:inline-block;margin-top:5px;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;
-              background:${s.intensityScore>=120?'rgba(248,113,113,0.12)':s.intensityScore>=90?'rgba(52,201,154,0.12)':'rgba(251,191,36,0.12)'};
-              color:${s.intensityScore>=120?'var(--red)':s.intensityScore>=90?'var(--green)':'var(--amber)'};">
-              Intensity ${s.intensityScore}</div>` : ''}
-            ${s.note ? `<div style="font-size:13px;color:var(--mid);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.note}</div>` : ''}
-          </div>
-          ${s.photo ? `<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;">
-            <img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;">
-          </div>` : ''}
+      return `
+      <div class="log-swipe-wrap" data-id="${s.id}" style="position:relative;margin-bottom:10px;border-radius:16px;overflow:hidden;">
+        <div class="log-delete-panel" style="position:absolute;right:0;top:0;bottom:0;width:80px;
+          background:var(--red);display:flex;flex-direction:column;align-items:center;
+          justify-content:center;gap:4px;border-radius:0 16px 16px 0;cursor:pointer;"
+          onclick="deleteLogEntry('${s.id}')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          <span style="font-size:10px;font-weight:700;color:white;letter-spacing:0.05em;">DELETE</span>
         </div>
-        ${s.tags && s.tags.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
-          ${s.tags.map(tag => `<span style="font-size:11px;padding:2px 9px;border-radius:99px;background:${t.color}15;color:${t.color};font-weight:600;">${tag}</span>`).join('')}
-        </div>` : ''}
-      </div>`;
-    }).join('');
+        <div class="log-card-inner" style="position:relative;background:var(--card);
+          border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;
+          transform:translateX(0);transition:transform 0.2s ease;will-change:transform;"
+          onclick="handleLogCardTap(event,'${s.id}')">
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="width:42px;height:42px;border-radius:12px;background:${t.color}18;
+              border:1px solid ${t.color}30;display:flex;align-items:center;
+              justify-content:center;flex-shrink:0;">
+              <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:800;
+                color:${t.color};letter-spacing:0.04em;text-align:center;line-height:1.2;">
+                ${t.label.toUpperCase()}</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:16px;font-weight:600;color:var(--ink);">${s.name || t.label}</div>
+              <div style="font-size:12px;color:var(--mid);margin-top:2px;">
+                ${s.duration ? s.duration + ' min' : ''}${s.duration && scoreStr ? ' · ' : ''}${scoreStr}
+                ${s.kcalActual ? ' · ' + s.kcalActual + ' kcal' : s.kcalEstimated ? ' · ~' + s.kcalEstimated + ' kcal est' : ''}
+                ${s.exercises && s.exercises.some(e=>e.actualWeight) ? ' · weights logged' : ''}
+              ${s.healthSource ? '<span style="color:var(--green);font-weight:600;"> · via Health</span>' : ''}
+            </div>
+              ${s.intensityScore ? `<div style="display:inline-block;margin-top:5px;padding:2px 10px;
+                border-radius:99px;font-size:11px;font-weight:700;
+                background:${s.intensityScore>=120?'rgba(248,113,113,0.12)':s.intensityScore>=90?'rgba(52,201,154,0.12)':'rgba(251,191,36,0.12)'};
+                color:${s.intensityScore>=120?'var(--red)':s.intensityScore>=90?'var(--green)':'var(--amber)'};">
+                Intensity ${s.intensityScore}</div>` : ''}
+              ${s.note ? `<div style="font-size:13px;color:var(--mid);margin-top:6px;
+                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.note}</div>` : ''}
+            </div>
+            ${s.photo ? `<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;">
+              <img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;">
+            </div>` : ''}
+          </div>
+          ${s.tags && s.tags.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+            ${s.tags.map(tag => `<span style="font-size:11px;padding:2px 9px;border-radius:99px;
+              background:${t.color}15;color:${t.color};font-weight:600;">${tag}</span>`).join('')}
+          </div>` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;
+            margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
+            <span style="font-size:11px;color:var(--subtle);">Tap to view · swipe left to delete</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--subtle)"
+              stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>`    }).join('');
     return `<div style="margin-bottom:4px;">
       <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px;">${date}</div>
       ${cards}
     </div>`;
   }).join('');
-}
+
+  requestAnimationFrame(initLogSwipe);}
 
 function formatScore(s) {
   if (!s.score && s.scoreType !== 'pass') return '';
