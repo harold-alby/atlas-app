@@ -5057,7 +5057,6 @@ function initLogSwipe() {
 }
 
 function handleLogCardTap(e, id) {
-  // If the card is swiped open, tap closes it instead of opening edit
   const inner = e.currentTarget;
   if (inner && inner._swipeOpen) {
     inner.style.transition = 'transform 0.2s ease';
@@ -5066,16 +5065,17 @@ function handleLogCardTap(e, id) {
     e.stopPropagation();
     return;
   }
-  // Otherwise open the edit sheet
-  openLogEntry(id);
+  // Coerce id — stored as number, passed as string from template literal
+  openLogEntry(isNaN(id) ? id : Number(id));
 }
 
 function deleteLogEntry(id) {
   const log = getSessionLog();
-  const entry = log.find(function(s) { return s.id == id; });
+  const numId = isNaN(id) ? id : Number(id);
+  const entry = log.find(function(s) { return s.id === numId || s.id == id; });
   const name = entry ? (entry.name || 'this session') : 'this session';
   if (!confirm('Delete "' + name + '"?')) return;
-  saveSessionLog(log.filter(function(s) { return s.id != id; }));
+  saveSessionLog(log.filter(function(s) { return s.id !== numId && s.id != id; }));
   renderLog();
 }
 
@@ -5214,7 +5214,7 @@ function setLogFilter(type) {
 
 // ── Log Entry Sheet ───────────────────────────────────────────────
 function openLogEntry(existingId) {
-  const existing = existingId ? getSessionLog().find(s => s.id === existingId) : null;
+  const existing = existingId ? getSessionLog().find(s => s.id === existingId || s.id == existingId) : null;
   let entry = existing ? JSON.parse(JSON.stringify(existing)) : {
     id: Date.now(),
     ts: Date.now(),
@@ -5363,9 +5363,42 @@ function openLogEntry(existingId) {
               <div style="font-size:10px;color:var(--accent);font-weight:600;text-align:right;min-width:52px;">ACTUAL</div>
             </div>
           </div>
+
+          ${(entry.wodType === 'AMRAP' || entry.wodType === 'EMOM') ? `
+          <div style="background:var(--accent-light);border:1.5px solid var(--accent)30;
+            border-radius:11px;padding:12px 14px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="flex:1;">
+                <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+                  color:var(--accent);margin-bottom:4px;">
+                  ${entry.wodType === 'EMOM'
+                    ? 'EMOM — ' + (entry.timeCap||'?') + ' min = ' + (entry.timeCap||'?') + ' rounds'
+                    : 'AMRAP — ' + (entry.timeCap||'?') + ' min · how many rounds?'}
+                </div>
+                ${entry.wodType === 'EMOM'
+                  ? '<div style="font-size:13px;color:var(--mid);">Rounds are fixed by time. Totals calculated below.</div>'
+                  : '<div style="font-size:13px;color:var(--mid);">Enter your round count to calculate total reps.</div>'}
+              </div>
+              ${entry.wodType === 'AMRAP' ? `
+              <input id="amrap-rounds" type="number" placeholder="0" min="0" step="0.5"
+                value="${entry.amrapRounds||''}"
+                onchange="_logSetAmrapRounds(this.value)"
+                style="width:64px;padding:10px;background:var(--card);border:1.5px solid var(--accent)40;
+                border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:24px;
+                font-weight:700;color:var(--accent);text-align:center;outline:none;box-sizing:border-box;">
+              ` : ''}
+            </div>
+          </div>` : ''}
           ${entry.exercises.map((ex, exIdx) => {
             const hasPrescribed = ex.prescribedWeight && ex.prescribedWeight !== 'null' && ex.prescribedWeight !== 'bodyweight';
             const sets = ex.scheme || ex.sets || ex.detail || '';
+            // Calculate total reps for AMRAP/EMOM
+            const isTimedWod = entry.wodType === 'AMRAP' || entry.wodType === 'EMOM';
+            const rounds = entry.wodType === 'EMOM'
+              ? (entry.timeCap || entry.totalRounds || null)
+              : (entry.amrapRounds || null);
+            const rpp = ex.repsPerRound || parseInt(ex.scheme) || null;
+            const totalReps = isTimedWod && rounds && rpp ? Math.round(rounds * rpp) : null;
             const prescribed = hasPrescribed ? ex.prescribedWeight : (ex.prescribedWeight === 'bodyweight' ? 'BW' : '—');
             const actual = ex.actualWeight || '';
             return `
@@ -5373,7 +5406,10 @@ function openLogEntry(existingId) {
               <div style="display:flex;align-items:flex-start;gap:10px;">
                 <div style="flex:1;min-width:0;">
                   <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px;">${ex.name}</div>
-                  <div style="font-size:12px;color:var(--mid);">${ex.scheme || ex.sets || ex.detail || ''}</div>
+                  <div style="font-size:12px;color:var(--mid);">
+                    ${sets}${totalReps ? ' &times; ' + rounds + ' rounds' : ''}
+                  </div>
+                  ${totalReps ? `<div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:1px;">= ${totalReps} total reps</div>` : ''}
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
                   ${hasPrescribed ? `
@@ -5510,6 +5546,22 @@ function openLogEntry(existingId) {
     </div>`;
 
     // ── Bind all handlers ─────────────────────────────────────────
+    window._logSetAmrapRounds = (val) => {
+      entry.amrapRounds = parseFloat(val) || null;
+      // Recalculate kcal based on rounds
+      if (entry.amrapRounds && entry.exercises) {
+        let total = 0;
+        entry.exercises.forEach(ex => {
+          total += (ex.kcal || 0) * entry.amrapRounds;
+        });
+        if (total > 0) entry.kcalEstimated = Math.round(total);
+      }
+      // Re-render just the totals without losing input focus
+      const roundsEl = document.getElementById('amrap-rounds');
+      const totalEl  = document.querySelector('.ex-kcal-total');
+      if (totalEl && entry.kcalEstimated) totalEl.textContent = entry.kcalEstimated + ' kcal';
+      render();
+    };
     window._logSetActualWeight = (idx, val) => {
       if (entry.exercises && entry.exercises[idx] !== undefined) {
         entry.exercises[idx].actualWeight = val.trim();
@@ -5642,34 +5694,51 @@ function openLogEntry(existingId) {
           body: JSON.stringify({
             model: 'claude-sonnet-4-6',
             max_tokens: 1500,
-            system: `You are an expert at reading CrossFit and gym whiteboards. Your job is to extract workout details with 100% accuracy.
+            system: `You are an expert at reading CrossFit and gym whiteboards. Extract workout details with complete accuracy.
 
 Athlete profile: age ${p.age||40}, weight ${p.weight||80}kg.
 
-INSTRUCTIONS:
-1. Read every piece of text on the board carefully
-2. Identify the workout type (AMRAP, For Time, EMOM, Rounds, etc.)
-3. List EVERY exercise with its EXACT rep scheme as written
-4. Extract prescribed weights EXACTLY as written (e.g. "43kg", "95lb", "24\"")
-5. For bodyweight movements (pull-ups, push-ups, sit-ups, etc.) set prescribedWeight to "bodyweight"
-6. For movements with no weight (run, row, box jump) set prescribedWeight to null
+WORKOUT TYPE RULES — this is critical:
 
-Return ONLY this JSON structure, no markdown, no explanation:
+AMRAP (As Many Rounds As Possible):
+- Extract the time cap (e.g. "AMRAP 20" = 20 minutes)
+- List each exercise with its reps PER ROUND as written
+- The athlete will enter how many rounds they completed — do NOT calculate total reps yourself
+- Set wodType = "AMRAP", timeCap = duration in minutes as number
+
+EMOM (Every Minute On the Minute):
+- Extract the total duration (e.g. "EMOM 10" = 10 minutes = 10 rounds)
+- List each exercise with reps per minute as written
+- totalRounds = duration in minutes (each minute = 1 round)
+- Set wodType = "EMOM", timeCap = duration in minutes, totalRounds = that number
+
+For Time / Rounds For Time:
+- Extract the full rep scheme exactly (e.g. "21-15-9", "5 rounds of 10")
+- Set wodType = "ForTime" or "Rounds"
+
+Always:
+- Extract prescribed weights EXACTLY as written ("43kg", "95lb", "24\"")
+- Bodyweight movements: prescribedWeight = "bodyweight"
+- No load (run, row, box jump): prescribedWeight = null
+
+Return ONLY this JSON, no markdown, no explanation:
 {
-  "name": "workout name or type (e.g. Fran, AMRAP 20, etc.)",
-  "wodType": "AMRAP/ForTime/EMOM/Rounds/Other",
-  "timeCap": "time cap if shown, else null",
+  "name": "workout name (e.g. Fran, AMRAP 20, EMOM 10)",
+  "wodType": "AMRAP/EMOM/ForTime/Rounds/Other",
+  "timeCap": duration_in_minutes_as_number_or_null,
+  "totalRounds": rounds_if_EMOM_else_null,
   "exercises": [
     {
       "name": "exact exercise name",
-      "scheme": "EXACT rep/set scheme as written (e.g. 21-15-9, 5 rounds of 10, AMRAP, 400m)",
-      "prescribedWeight": "exact weight as written or bodyweight or null",
+      "scheme": "reps per round/minute as written (e.g. 10, 12, 400m)",
+      "repsPerRound": reps_as_integer_or_null,
+      "prescribedWeight": "exact weight or bodyweight or null",
       "unit": "kg or lb or m or cal or null",
-      "kcal": estimated_kcal_for_this_exercise_as_integer
+      "kcal": estimated_kcal_per_round_as_integer
     }
   ],
-  "kcalEstimated": total_estimated_kcal_as_integer,
-  "notes": "any rx weights, scaling notes, or other info from the board"
+  "kcalEstimated": total_kcal_estimate_assuming_average_rounds,
+  "notes": "any scaling, rx weights, or other board notes"
 }`,
             messages: [{
               role: 'user',
@@ -5881,6 +5950,8 @@ Rules:
       const dateEl    = document.getElementById('log-date');
       const wtEl      = document.getElementById('log-workout-text');
       const kcalActEl = document.getElementById('log-kcal-actual');
+      const amrapEl = document.getElementById('amrap-rounds');
+      if (amrapEl && amrapEl.value) entry.amrapRounds = parseFloat(amrapEl.value);
       if (nameEl)    entry.name        = nameEl.value.trim();
       if (durEl)     entry.duration    = durEl.value ? Number(durEl.value) : null;
       if (scoreEl && entry.scoreType && entry.scoreType !== 'pass')
